@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+    <div class="page-heading auth-heading">
+        <div>
+            <h1 class="eyebrow">Register</h1>
+            <h3>Register a student account for SQL submissions.</h3>
+            <p>The final application should hash passwords before saving them to the students table.</p>
+        </div>
+    </div>
+
+    <form class="form-card auth-card" action="{{ url_for('register') }}" method="post">
+        {% if message %}
+        <p class="form-message">{{ message }}</p>
+        {% endif %}
+
+        <div class="input-group">
+            <label for="username">Username</label>
+            <input id="username" name="username" type="text" placeholder="student01" autocomplete="username" required>
+        </div>
+
+        <div class="input-group">
+            <label for="full-name">Full name</label>
+            <input id="full-name" name="full_name" type="text" placeholder="Student One" autocomplete="name" required>
+        </div>
+
+        <div class="input-group">
+            <label for="email">Email address</label>
+            <input id="email" name="email" type="email" placeholder="student01@example.com" autocomplete="email" required>
+        </div>
+
+        <div class="input-group">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" placeholder="Create a password" autocomplete="new-password" required>
+        </div>
+
+        <div class="input-group">
+            <label for="confirm-password">Confirm password</label>
+            <input id="confirm-password" name="confirm_password" type="password" placeholder="Re-enter password" autocomplete="new-password" required>
+        </div>
+
+        <button class="primary-button" type="submit">Register</button>
+
+        <p class="auth-note">
+            Already have an account?
+            <a class="text-link" href="{{ url_for('login') }}">Log in</a>
+        </p>
+    </form>
+
+    <script type="application/json" id="register-data">
+    {
+        "sampleUser": {
+            "username": "student01",
+            "fullName": "Student One",
+            "email": "student01@example.com",
+            "passwordStorage": "hashed"
+        }
+    }
+    </script>
+</section>
+{% endblock %}

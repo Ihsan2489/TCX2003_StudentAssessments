@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TCX2003 SQL Grader{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="nav-shell" aria-label="Main navigation">
+            <a class="brand" href="{{ url_for('home') }}">TCX2003 Ninja</a>
+            <div class="nav-links">
+                <a href="{{ url_for('assessments') }}">Assessments</a>
+                <a href="{{ url_for('score') }}">My Scores</a>
+                <a href="{{ url_for('leaderboard') }}">Leaderboard</a>
+                <a href="{{ url_for('change_password') }}">Password</a>
+                <a href="{{ url_for('login') }}">Login</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="page-shell">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+
+{% block title %}Submit SQL{% endblock %}
+
+{% block content %}
+<section class="submit-page">
+    <div class="page-heading">
+        <div>
+            <h1 class="eyebrow">Assessments</h1>
+            <h3>Submit SQL solutions by assessment ID and task ID.</h3>
+            <p>Each submission is stored as a separate attempt. The latest attempt counts toward leaderboard scores.</p>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        <form class="form-card submit-form" action="{{ url_for('score') }}" method="get">
+            <div class="form-grid">
+                <div class="input-group">
+                    <label for="aid">Assessment ID</label>
+                    <select id="aid" name="aid">
+                        <option value="A01">A01 - Book exchange queries</option>
+                        <option value="A02">A02 - Aggregation practice</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="tid">Task ID</label>
+                    <select id="tid" name="tid">
+                        <option value="T01">T01 - Full mark query</option>
+                        <option value="T02">T02 - Multi-statement update</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="sql-code">SQL code</label>
+                <textarea id="sql-code" name="code" spellcheck="false">SELECT DISTINCT s.email
+FROM loan l, student s
+WHERE (l.owner = s.email OR l.borrower = s.email)
+  AND l.borrowed &lt; s.year;</textarea>
+            </div>
+
+            <button class="primary-button" type="submit">Submit attempt</button>
+        </form>
+
+        <aside class="panel">
+            <h2>Sample task data</h2>
+            <div class="task-list" id="sample-task-list"></div>
+        </aside>
+    </div>
+</section>
+
+<script type="application/json" id="submit-data">
+[
+    {
+        "aid": "A01",
+        "tid": "T01",
+        "title": "Return emails of distinct students who borrowed or lent a book before joining university.",
+        "due": "15 May 2026"
+    },
+    {
+        "aid": "A01",
+        "tid": "T02",
+        "title": "Insert a new student and update only CS students to Computer Science.",
+        "due": "15 May 2026"
+    }
+]
+</script>
+
+<script>
+    const submitData = JSON.parse(document.getElementById("submit-data").textContent);
+    const sampleTaskList = document.getElementById("sample-task-list");
+
+    submitData.forEach((task) => {
+        const item = document.createElement("article");
+        item.className = "task-item";
+        item.innerHTML = `<h3>${task.aid} / ${task.tid}</h3><p>${task.title}</p><span class="badge">Due ${task.due}</span>`;
+        sampleTaskList.appendChild(item);
+    });
+</script>
+{% endblock %}

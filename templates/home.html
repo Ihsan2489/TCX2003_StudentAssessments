@@ -1,0 +1,90 @@
+{% extends "layout.html" %}
+
+{% block title %}Home Dashboard{% endblock %}
+
+{% block content %}
+<section class="home-page">
+    <div class="page-heading">
+        <div>
+            <h1 class="eyebrow">Hello, {{ user.username }}!</h1>
+            <h3>Monitor SQL submissions, scores, attempts, and grading progress.</h3>
+            <p>Dummy data below represents the student view after login.</p>
+        </div>
+        <a class="secondary-button" href="{{ url_for('assessments') }}">Submit SQL</a>
+    </div>
+
+    <div class="stat-grid" id="home-stats"></div>
+
+    <div class="content-grid">
+        <section class="panel">
+            <div class="panel-heading">
+                <h2>Recent attempts</h2>
+                <a class="text-link" href="{{ url_for('score') }}">View scores</a>
+            </div>
+            <div class="activity-list" id="recent-attempts"></div>
+        </section>
+
+        <aside class="panel">
+            <div class="panel-heading">
+                <h2>Open tasks</h2>
+            </div>
+            <div class="task-list" id="open-tasks"></div>
+        </aside>
+    </div>
+</section>
+
+<script type="application/json" id="home-data">
+{
+    "stats": [
+        {"label": "Assessments", "value": "2"},
+        {"label": "Submitted tasks", "value": "6"},
+        {"label": "Latest average", "value": "82%"},
+        {"label": "Attempts stored", "value": "11"}
+    ],
+    "recentAttempts": [
+        {"aid": "A01", "tid": "T01", "title": "Borrowed or lent before joining", "attempt": 2, "score": "100%", "status": "Full marks"},
+        {"aid": "A01", "tid": "T02", "title": "Insert demo student and update CS department", "attempt": 1, "score": "60%", "status": "Partial marks"},
+        {"aid": "A02", "tid": "T01", "title": "Aggregate loans by department", "attempt": 1, "score": "Late penalty applied", "status": "Late"}
+    ],
+    "openTasks": [
+        {"aid": "A01", "tid": "T02", "due": "15 May 2026"},
+        {"aid": "A02", "tid": "T01", "due": "18 May 2026"},
+        {"aid": "A02", "tid": "T02", "due": "18 May 2026"}
+    ]
+}
+</script>
+
+<script>
+    const homeData = JSON.parse(document.getElementById("home-data").textContent);
+    const statsNode = document.getElementById("home-stats");
+    const attemptsNode = document.getElementById("recent-attempts");
+    const tasksNode = document.getElementById("open-tasks");
+
+    homeData.stats.forEach((stat) => {
+        const card = document.createElement("article");
+        card.className = "stat-card";
+        card.innerHTML = `<span>${stat.label}</span><strong>${stat.value}</strong>`;
+        statsNode.appendChild(card);
+    });
+
+    homeData.recentAttempts.forEach((attempt) => {
+        const item = document.createElement("article");
+        item.className = "activity-item";
+        item.innerHTML = `
+            <div>
+                <h3>${attempt.aid} / ${attempt.tid}: ${attempt.title}</h3>
+                <p>Attempt ${attempt.attempt} · Score ${attempt.score}</p>
+            </div>
+            <span class="status-badge ${attempt.status === "Late" ? "late" : attempt.status === "Partial marks" ? "partial" : "full"}">${attempt.status}</span>
+        `;
+        attemptsNode.appendChild(item);
+    });
+
+    homeData.openTasks.forEach((task) => {
+        const item = document.createElement("article");
+        item.className = "task-item";
+        item.innerHTML = `<h3>${task.aid} / ${task.tid}</h3><p>Due ${task.due}</p>`;
+        tasksNode.appendChild(item);
+    });
+</script>
+{% endblock %}

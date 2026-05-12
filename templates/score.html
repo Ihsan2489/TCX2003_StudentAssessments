@@ -1,0 +1,77 @@
+{% extends "layout.html" %}
+
+{% block title %}Personal Scores{% endblock %}
+
+{% block content %}
+<section class="score-page">
+    <div class="page-heading">
+        <div>
+            <h1 class="eyebrow">Personal scores</h1>
+            <h3>View marks for all SQL submissions and attempts.</h3>
+            <p>Scores shown here are dummy values for the student-facing score display required in the project brief.</p>
+        </div>
+        <a class="secondary-button" href="{{ url_for('assessments') }}">Resubmit SQL</a>
+    </div>
+
+    <div class="score-grid" id="score-summary"></div>
+
+    <table class="score-table" aria-label="Submission scores">
+        <thead>
+            <tr>
+                <th>Assessment</th>
+                <th>Task</th>
+                <th>Attempt</th>
+                <th>Submitted</th>
+                <th>Raw</th>
+                <th>Final</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="score-table-body"></tbody>
+    </table>
+</section>
+
+<script type="application/json" id="score-data">
+{
+    "summary": [
+        {"label": "Average score", "value": "82%"},
+        {"label": "Best task score", "value": "100%"},
+        {"label": "Late penalties", "value": "1"}
+    ],
+    "submissions": [
+        {"aid": "A01", "tid": "T01", "attempt": 1, "submitted": "12 May 2026 09:15", "raw": 100, "final": 100, "status": "Full marks"},
+        {"aid": "A01", "tid": "T02", "attempt": 1, "submitted": "12 May 2026 09:28", "raw": 60, "final": 60, "status": "Partial marks"},
+        {"aid": "A01", "tid": "T02", "attempt": 2, "submitted": "12 May 2026 10:04", "raw": 100, "final": 100, "status": "Full marks"},
+        {"aid": "A02", "tid": "T01", "attempt": 1, "submitted": "19 May 2026 08:45", "raw": 80, "final": 72, "status": "Late penalty"}
+    ]
+}
+</script>
+
+<script>
+    const scoreData = JSON.parse(document.getElementById("score-data").textContent);
+    const summaryNode = document.getElementById("score-summary");
+    const tableBody = document.getElementById("score-table-body");
+
+    scoreData.summary.forEach((item) => {
+        const card = document.createElement("article");
+        card.className = "score-card";
+        card.innerHTML = `<div class="score-header"><h2>${item.label}</h2></div><div class="score-value">${item.value}</div>`;
+        summaryNode.appendChild(card);
+    });
+
+    scoreData.submissions.forEach((submission) => {
+        const row = document.createElement("tr");
+        const statusClass = submission.status === "Late penalty" ? "late" : submission.status === "Partial marks" ? "partial" : "full";
+        row.innerHTML = `
+            <td>${submission.aid}</td>
+            <td>${submission.tid}</td>
+            <td>${submission.attempt}</td>
+            <td>${submission.submitted}</td>
+            <td>${submission.raw}%</td>
+            <td>${submission.final}%</td>
+            <td><span class="status-badge ${statusClass}">${submission.status}</span></td>
+        `;
+        tableBody.appendChild(row);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "layout.html" %}
+
+{% block title %}Leaderboard{% endblock %}
+
+{% block content %}
+<section class="leaderboard-page">
+    <div class="page-heading">
+        <div>
+            <h1 class="eyebrow">Leaderboard</h1>
+            <h3>Top 5 students ranked by average latest-attempt score.</h3>
+            <p>The leaderboard can be filtered by assessment. Only the latest submission per task should count.</p>
+        </div>
+    </div>
+
+    <div class="leaderboard-layout">
+        <section class="panel">
+            <div class="panel-heading">
+                <h2>Assessment leaderboard</h2>
+                <select id="assessment-filter" aria-label="Assessment filter">
+                    <option value="A01">A01 - Book exchange queries</option>
+                    <option value="A02">A02 - Aggregation practice</option>
+                </select>
+            </div>
+            <div class="leader-list" id="leader-list"></div>
+        </section>
+
+        <aside class="panel">
+            <h2>Ranking rule</h2>
+            <p>Average scores are calculated from the latest attempt for each task in the selected assessment. Late submissions show the 10% penalty after grading.</p>
+        </aside>
+    </div>
+</section>
+
+<script type="application/json" id="leaderboard-data">
+{
+    "A01": [
+        {"rank": 1, "username": "student04", "average": 98, "tasks": 2},
+        {"rank": 2, "username": "student01", "average": 92, "tasks": 2},
+        {"rank": 3, "username": "student08", "average": 88, "tasks": 2},
+        {"rank": 4, "username": "student03", "average": 84, "tasks": 2},
+        {"rank": 5, "username": "student11", "average": 81, "tasks": 2}
+    ],
+    "A02": [
+        {"rank": 1, "username": "student02", "average": 95, "tasks": 2},
+        {"rank": 2, "username": "student06", "average": 90, "tasks": 2},
+        {"rank": 3, "username": "student01", "average": 82, "tasks": 2},
+        {"rank": 4, "username": "student09", "average": 78, "tasks": 2},
+        {"rank": 5, "username": "student05", "average": 72, "tasks": 2}
+    ]
+}
+</script>
+
+<script>
+    const leaderboardData = JSON.parse(document.getElementById("leaderboard-data").textContent);
+    const filter = document.getElementById("assessment-filter");
+    const leaderList = document.getElementById("leader-list");
+
+    function renderLeaderboard(assessmentId) {
+        leaderList.innerHTML = "";
+        leaderboardData[assessmentId].forEach((student) => {
+            const item = document.createElement("article");
+            item.className = "leader-row";
+            item.innerHTML = `
+                <span class="leader-rank">${student.rank}</span>
+                <div>
+                    <h3>${student.username}</h3>
+                    <p>${student.tasks} tasks counted from latest attempts</p>
+                </div>
+                <span class="badge">${student.average}% average</span>
+            `;
+            leaderList.appendChild(item);
+        });
+    }
+
+    filter.addEventListener("change", () => renderLeaderboard(filter.value));
+    renderLeaderboard(filter.value);
+</script>
+{% endblock %}
