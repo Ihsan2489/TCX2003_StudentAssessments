@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Flask
+instance/
+.webassets-cache
+
+# Environment variables and local config
+.env
+.env.*
+*.local
+
+# macOS
+.DS_Store
+
+# IDE/editor files
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Local database dumps/backups
+*.sql.gz
+*.dump
+*.bak
