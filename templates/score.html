@@ -7,8 +7,8 @@
     <div class="page-heading">
         <div>
             <h1 class="eyebrow">Personal scores</h1>
-            <h3>View marks for all SQL submissions and attempts.</h3>
-            <p>Scores shown here are dummy values for the student-facing score display required in the project brief.</p>
+            <h3>View assessment grades and contribution to group score.</h3>
+            <p>Each assessment score is based on task question sets, with up to 3 attempts per assessment.</p>
         </div>
         <a class="secondary-button" href="{{ url_for('assessments') }}">Resubmit SQL</a>
     </div>
@@ -19,11 +19,13 @@
         <thead>
             <tr>
                 <th>Assessment</th>
-                <th>Task</th>
-                <th>Attempt</th>
+                <th>Questions</th>
+                <th>Best attempt</th>
                 <th>Submitted</th>
-                <th>Raw</th>
-                <th>Final</th>
+                <th>Raw score</th>
+                <th>Penalty</th>
+                <th>Final score</th>
+                <th>Group contribution</th>
                 <th>Status</th>
             </tr>
         </thead>
@@ -34,15 +36,15 @@
 <script type="application/json" id="score-data">
 {
     "summary": [
-        {"label": "Average score", "value": "82%"},
-        {"label": "Best task score", "value": "100%"},
+        {"label": "Personal average", "value": "86%"},
+        {"label": "Group", "value": "G04"},
+        {"label": "Group average", "value": "91%"},
         {"label": "Late penalties", "value": "1"}
     ],
     "submissions": [
-        {"aid": "A01", "tid": "T01", "attempt": 1, "submitted": "12 May 2026 09:15", "raw": 100, "final": 100, "status": "Full marks"},
-        {"aid": "A01", "tid": "T02", "attempt": 1, "submitted": "12 May 2026 09:28", "raw": 60, "final": 60, "status": "Partial marks"},
-        {"aid": "A01", "tid": "T02", "attempt": 2, "submitted": "12 May 2026 10:04", "raw": 100, "final": 100, "status": "Full marks"},
-        {"aid": "A02", "tid": "T01", "attempt": 1, "submitted": "19 May 2026 08:45", "raw": 80, "final": 72, "status": "Late penalty"}
+        {"aid": "A01", "title": "Book exchange joins", "questions": "5 / 5", "attempt": "2 of 3", "submitted": "12 May 2026 09:15", "rawScore": 100, "latePenalty": 0, "finalScore": 100, "groupContribution": 100, "status": "Completed"},
+        {"aid": "A02", "title": "Aggregation basics", "questions": "4 / 5", "attempt": "1 of 3", "submitted": "13 May 2026 11:20", "rawScore": 80, "latePenalty": 0, "finalScore": 80, "groupContribution": 80, "status": "Can retry"},
+        {"aid": "A03", "title": "Subqueries and filters", "questions": "4 / 5", "attempt": "3 of 3", "submitted": "20 May 2026 15:40", "rawScore": 78, "latePenalty": 10, "finalScore": 70.2, "groupContribution": 70.2, "status": "Late penalty"}
     ]
 }
 </script>
@@ -61,14 +63,16 @@
 
     scoreData.submissions.forEach((submission) => {
         const row = document.createElement("tr");
-        const statusClass = submission.status === "Late penalty" ? "late" : submission.status === "Partial marks" ? "partial" : "full";
+        const statusClass = submission.status === "Late penalty" ? "late" : submission.status === "Can retry" ? "partial" : "full";
         row.innerHTML = `
-            <td>${submission.aid}</td>
-            <td>${submission.tid}</td>
+            <td>${submission.aid}: ${submission.title}</td>
+            <td>${submission.questions}</td>
             <td>${submission.attempt}</td>
             <td>${submission.submitted}</td>
-            <td>${submission.raw}%</td>
-            <td>${submission.final}%</td>
+            <td>${submission.rawScore}%</td>
+            <td>${submission.latePenalty ? `-${submission.latePenalty}%` : "None"}</td>
+            <td>${submission.finalScore}%</td>
+            <td>${submission.groupContribution}%</td>
             <td><span class="status-badge ${statusClass}">${submission.status}</span></td>
         `;
         tableBody.appendChild(row);

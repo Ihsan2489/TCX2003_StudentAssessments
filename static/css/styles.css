@@ -110,7 +110,8 @@ a {
 .panel,
 .stat-card,
 .score-card,
-.leader-card {
+.leader-card,
+.group-card {
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 8px;
@@ -159,6 +160,11 @@ a {
     padding: 10px 12px;
 }
 
+.warning-text {
+    color: var(--warning) !important;
+    font-weight: 700;
+}
+
 .input-group {
     display: grid;
     gap: 8px;
@@ -202,6 +208,12 @@ textarea:focus {
     outline: 3px solid rgba(23, 107, 135, 0.16);
 }
 
+input:disabled {
+    background: var(--surface-soft);
+    color: var(--muted);
+    cursor: not-allowed;
+}
+
 .form-grid,
 .content-grid,
 .score-grid,
@@ -242,11 +254,21 @@ textarea:focus {
     background: var(--primary-dark);
 }
 
+.primary-button:disabled {
+    cursor: default;
+    opacity: 0.65;
+}
+
 .secondary-button {
     border: 1px solid var(--line);
     background: var(--surface);
     color: var(--primary-dark);
     padding: 0 16px;
+}
+
+.secondary-button:disabled {
+    cursor: default;
+    opacity: 0.65;
 }
 
 .text-link {
@@ -318,14 +340,18 @@ textarea:focus {
 .activity-list,
 .task-list,
 .score-list,
-.leader-list {
+.leader-list,
+.blank-question-list {
     display: grid;
     gap: 12px;
 }
 
 .activity-item,
 .task-item,
-.leader-row {
+.leader-row,
+.blank-question,
+.task-summary,
+.group-card {
     border: 1px solid var(--line);
     border-radius: 8px;
     padding: 14px;
@@ -442,8 +468,36 @@ textarea:focus {
 }
 
 .leaderboard-layout {
-    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
+}
+
+.leaderboard-layout .panel {
+    height: 100%;
+}
+
+.profile-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 22px;
+    align-items: start;
+}
+
+.profile-details {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 14px;
+    margin: 0;
+}
+
+.profile-details dt {
+    color: var(--muted);
+    font-weight: 700;
+}
+
+.profile-details dd {
+    margin: 0;
+    font-weight: 700;
 }
 
 .leader-row {
@@ -462,13 +516,117 @@ textarea:focus {
     font-weight: 700;
 }
 
+.group-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.group-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.group-card.is-joined {
+    border-color: var(--primary);
+}
+
+.group-card.is-full {
+    opacity: 0.78;
+}
+
+.group-card-main {
+    min-width: 0;
+}
+
+.group-card-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.group-card h2 {
+    margin: 10px 0 4px;
+    font-size: 1.2rem;
+}
+
+.group-card p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.student-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.student-chip-list span {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-soft);
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 5px 9px;
+}
+
+.group-leader-row p {
+    max-width: 300px;
+}
+
+.blank-question {
+    display: grid;
+    gap: 10px;
+}
+
+.task-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: var(--surface-soft);
+}
+
+.task-summary h2 {
+    margin: 0 0 4px;
+    font-size: 1.05rem;
+}
+
+.task-summary p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.blank-question code {
+    display: block;
+    overflow-x: auto;
+    border-radius: 6px;
+    background: #101827;
+    color: #f5f7fb;
+    font: 0.92rem Consolas, Monaco, monospace;
+    padding: 12px;
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+    max-width: 480px;
+}
+
 @media (max-width: 820px) {
     .nav-shell,
     .page-heading,
     .compact-row,
     .panel-heading,
     .score-header,
-    .leader-row {
+    .leader-row,
+    .group-card {
         align-items: flex-start;
         flex-direction: column;
     }
@@ -481,7 +639,9 @@ textarea:focus {
     .content-grid,
     .stat-grid,
     .score-grid,
-    .leaderboard-layout {
+    .leaderboard-layout,
+    .profile-layout,
+    .group-grid {
         grid-template-columns: 1fr;
     }
 

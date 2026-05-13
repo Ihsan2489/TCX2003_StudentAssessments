@@ -1,14 +1,14 @@
 {% extends "layout.html" %}
 
-{% block title %}Submit SQL{% endblock %}
+{% block title %}Assessments{% endblock %}
 
 {% block content %}
 <section class="submit-page">
     <div class="page-heading">
         <div>
             <h1 class="eyebrow">Assessments</h1>
-            <h3>Submit SQL solutions by assessment ID and task ID.</h3>
-            <p>Each submission is stored as a separate attempt. The latest attempt counts toward leaderboard scores.</p>
+            <h3>Choose an assessment task and answer its SQL fill-in-the-blank questions.</h3>
+            <p>Each assessment has 5 chronological tasks. Available tasks depend on the number of members in your group.</p>
         </div>
     </div>
 
@@ -18,64 +18,251 @@
                 <div class="input-group">
                     <label for="aid">Assessment ID</label>
                     <select id="aid" name="aid">
-                        <option value="A01">A01 - Book exchange queries</option>
-                        <option value="A02">A02 - Aggregation practice</option>
+                        <option value="A01">A01 - Book exchange joins</option>
+                        <option value="A02">A02 - Aggregation basics</option>
+                        <option value="A03">A03 - Subqueries and filters</option>
                     </select>
                 </div>
 
                 <div class="input-group">
-                    <label for="tid">Task ID</label>
-                    <select id="tid" name="tid">
-                        <option value="T01">T01 - Full mark query</option>
-                        <option value="T02">T02 - Multi-statement update</option>
-                    </select>
+                    <label for="task-select">Task</label>
+                    <select id="task-select" name="task"></select>
+                </div>
+
+                <div class="input-group">
+                    <label for="attempt">Attempt</label>
+                    <input id="attempt" name="attempt" type="text" value="Attempt 2 of 3 - best attempt score is used for personal and group grading" readonly>
                 </div>
             </div>
 
-            <div class="input-group">
-                <label for="sql-code">SQL code</label>
-                <textarea id="sql-code" name="code" spellcheck="false">SELECT DISTINCT s.email
-FROM loan l, student s
-WHERE (l.owner = s.email OR l.borrower = s.email)
-  AND l.borrowed &lt; s.year;</textarea>
-            </div>
+            <div class="blank-question-list" id="blank-question-list"></div>
 
-            <button class="primary-button" type="submit">Submit attempt</button>
+            <button class="primary-button" id="submit-attempt-button" type="submit">Submit attempt</button>
         </form>
 
         <aside class="panel">
-            <h2>Sample task data</h2>
-            <div class="task-list" id="sample-task-list"></div>
+            <h2>Assessment rules</h2>
+            <div class="task-list" id="assessment-rule-list"></div>
         </aside>
     </div>
 </section>
 
 <script type="application/json" id="submit-data">
-[
-    {
-        "aid": "A01",
-        "tid": "T01",
-        "title": "Return emails of distinct students who borrowed or lent a book before joining university.",
-        "due": "15 May 2026"
+{
+    "group": {
+        "groupId": "G04",
+        "memberCount": 4
     },
-    {
-        "aid": "A01",
-        "tid": "T02",
-        "title": "Insert a new student and update only CS students to Computer Science.",
-        "due": "15 May 2026"
-    }
-]
+    "assessments": {
+        "A01": {
+            "title": "Book exchange joins",
+            "tasks": [
+                {
+                    "taskNo": 1,
+                    "status": "done",
+                    "questions": [
+                        {"number": 1, "sql": "SELECT DISTINCT s.email FROM loan l, student s WHERE l.owner = s.email ___ l.borrower = s.email;", "placeholder": "one word"},
+                        {"number": 2, "sql": "SELECT * FROM loan ___ borrower = 'demo1@nowhere.com';", "placeholder": "one word"},
+                        {"number": 3, "sql": "SELECT s.email FROM student s ___ loan l ON s.email = l.owner;", "placeholder": "one word"}
+                    ]
+                },
+                {
+                    "taskNo": 2,
+                    "status": "open",
+                    "questions": [
+                        {"number": 1, "sql": "SELECT title FROM book WHERE owner ___ 'demo1@nowhere.com';", "placeholder": "one word"},
+                        {"number": 2, "sql": "SELECT DISTINCT borrower FROM loan ___ borrowed < returned;", "placeholder": "one word"},
+                        {"number": 3, "sql": "SELECT COUNT(*) FROM loan GROUP ___ owner;", "placeholder": "one word"}
+                    ]
+                },
+                {
+                    "taskNo": 3,
+                    "status": "open",
+                    "questions": [
+                        {"number": 1, "sql": "SELECT owner, COUNT(*) FROM loan GROUP BY owner ___ COUNT(*) > 1;", "placeholder": "one word"},
+                        {"number": 2, "sql": "SELECT * FROM student WHERE year ___ 2024;", "placeholder": "one word"},
+                        {"number": 3, "sql": "SELECT email FROM student ___ faculty = 'Science';", "placeholder": "one word"}
+                    ]
+                },
+                {
+                    "taskNo": 4,
+                    "status": "open",
+                    "questions": [
+                        {"number": 1, "sql": "SELECT * FROM book ORDER ___ title;", "placeholder": "one word"},
+                        {"number": 2, "sql": "SELECT DISTINCT owner FROM loan ___ owner IS NOT NULL;", "placeholder": "one word"},
+                        {"number": 3, "sql": "SELECT email FROM student WHERE department ___ 'CS';", "placeholder": "one word"}
+                    ]
+                },
+                {
+                    "taskNo": 5,
+                    "status": "open",
+                    "questions": [
+                        {"number": 1, "sql": "SELECT borrower FROM loan ___ borrowed BETWEEN 2020 AND 2025;", "placeholder": "one word"},
+                        {"number": 2, "sql": "SELECT owner FROM loan UNION ___ borrower FROM loan;", "placeholder": "one word"},
+                        {"number": 3, "sql": "SELECT * FROM loan WHERE returned ___ NULL;", "placeholder": "one word"}
+                    ]
+                }
+            ]
+        },
+        "A02": {
+            "title": "Aggregation basics",
+            "tasks": [
+                {
+                    "taskNo": 1,
+                    "status": "done",
+                    "questions": [
+                        {"number": 1, "sql": "SELECT department, COUNT(*) FROM students ___ BY department;", "placeholder": "one word"},
+                        {"number": 2, "sql": "SELECT AVG(year) FROM students ___ faculty = 'Computing';", "placeholder": "one word"},
+                        {"number": 3, "sql": "SELECT MAX(year) ___ students;", "placeholder": "one word"}
+                    ]
+                },
+                {
+                    "taskNo": 2,
+                    "status": "open",
+                    "questions": [
+                        {"number": 1, "sql": "SELECT faculty, COUNT(*) FROM students GROUP BY faculty ___ COUNT(*) > 3;", "placeholder": "one word"},
+                        {"number": 2, "sql": "SELECT department FROM students GROUP BY department ORDER ___ COUNT(*) DESC;", "placeholder": "one word"},
+                        {"number": 3, "sql": "SELECT COUNT(DISTINCT department) ___ students;", "placeholder": "one word"}
+                    ]
+                },
+                {
+                    "taskNo": 3,
+                    "status": "open",
+                    "questions": [
+                        {"number": 1, "sql": "SELECT faculty, AVG(year) FROM students GROUP ___ faculty;", "placeholder": "one word"},
+                        {"number": 2, "sql": "SELECT department, MIN(year) FROM students ___ BY department;", "placeholder": "one word"},
+                        {"number": 3, "sql": "SELECT COUNT(*) FROM students WHERE email ___ '%@nowhere.com';", "placeholder": "one word"}
+                    ]
+                },
+                {
+                    "taskNo": 4,
+                    "status": "open",
+                    "questions": [
+                        {"number": 1, "sql": "SELECT department, COUNT(*) FROM students GROUP BY department ___ department;", "placeholder": "one word"},
+                        {"number": 2, "sql": "SELECT SUM(year) FROM students ___ faculty = 'Science';", "placeholder": "one word"},
+                        {"number": 3, "sql": "SELECT faculty FROM students GROUP BY faculty ___ AVG(year) > 2023;", "placeholder": "one word"}
+                    ]
+                },
+                {
+                    "taskNo": 5,
+                    "status": "open",
+                    "questions": [
+                        {"number": 1, "sql": "SELECT COUNT(*) FROM students WHERE department ___ NULL;", "placeholder": "one word"},
+                        {"number": 2, "sql": "SELECT faculty, MAX(year) FROM students GROUP ___ faculty;", "placeholder": "one word"},
+                        {"number": 3, "sql": "SELECT department, COUNT(*) FROM students GROUP BY department ___ COUNT(*) DESC;", "placeholder": "one word"}
+                    ]
+                }
+            ]
+        },
+        "A03": {
+            "title": "Subqueries and filters",
+            "tasks": [
+                {"taskNo": 1, "status": "done", "questions": [{"number": 1, "sql": "SELECT email FROM students WHERE year = (SELECT MAX(year) ___ students);", "placeholder": "one word"}, {"number": 2, "sql": "SELECT title FROM books WHERE owner ___ (SELECT email FROM students);", "placeholder": "one word"}, {"number": 3, "sql": "SELECT * FROM loan WHERE borrower ___ NULL;", "placeholder": "one word"}]},
+                {"taskNo": 2, "status": "open", "questions": [{"number": 1, "sql": "SELECT email FROM students WHERE EXISTS ___SELECT 1 FROM loan);", "placeholder": "one word"}, {"number": 2, "sql": "SELECT title FROM books WHERE price ___ (SELECT AVG(price) FROM books);", "placeholder": "one word"}, {"number": 3, "sql": "SELECT * FROM students WHERE department ___ 'CS';", "placeholder": "one word"}]},
+                {"taskNo": 3, "status": "open", "questions": [{"number": 1, "sql": "SELECT email FROM students WHERE email ___ (SELECT borrower FROM loan);", "placeholder": "one word"}, {"number": 2, "sql": "SELECT * FROM books WHERE owner NOT ___ (SELECT borrower FROM loan);", "placeholder": "one word"}, {"number": 3, "sql": "SELECT * FROM students WHERE year ___ 2025;", "placeholder": "one word"}]},
+                {"taskNo": 4, "status": "open", "questions": [{"number": 1, "sql": "SELECT * FROM books WHERE price ___ 10 AND 50;", "placeholder": "one word"}, {"number": 2, "sql": "SELECT * FROM students WHERE faculty ___ 'Science';", "placeholder": "one word"}, {"number": 3, "sql": "SELECT * FROM loan WHERE borrowed ___ returned;", "placeholder": "one word"}]},
+                {"taskNo": 5, "status": "open", "questions": [{"number": 1, "sql": "SELECT * FROM students WHERE email LIKE ___;", "placeholder": "one word"}, {"number": 2, "sql": "SELECT * FROM loan WHERE owner ___ borrower;", "placeholder": "one word"}, {"number": 3, "sql": "SELECT * FROM books WHERE title ___ NULL;", "placeholder": "one word"}]}
+            ]
+        }
+    },
+    "rules": [
+        {"label": "Tasks", "value": "5 per assessment, ordered 1 to 5"},
+        {"label": "Available tasks", "value": "Limited by current group member count"},
+        {"label": "Questions", "value": "5 fill-in-the-blank SQL questions per task"},
+        {"label": "Blank format", "value": "One word per blank"},
+        {"label": "Done tasks", "value": "Answers are locked and cannot be resubmitted"},
+        {"label": "Attempts", "value": "Maximum 3 attempts. Best attempt score is used for personal and group grading."},
+        {"label": "Late penalty", "value": "10% reduction from the assessment score"},
+        {"label": "Scoring", "value": "Assessment score contributes to student and group totals"}
+    ]
+}
 </script>
 
 <script>
     const submitData = JSON.parse(document.getElementById("submit-data").textContent);
-    const sampleTaskList = document.getElementById("sample-task-list");
+    const assessmentSelect = document.getElementById("aid");
+    const taskSelect = document.getElementById("task-select");
+    const questionList = document.getElementById("blank-question-list");
+    const ruleList = document.getElementById("assessment-rule-list");
+    const submitAttemptButton = document.getElementById("submit-attempt-button");
 
-    submitData.forEach((task) => {
+    function normalizeTaskQuestions() {
+        Object.values(submitData.assessments).forEach((assessment) => {
+            assessment.tasks.forEach((task) => {
+                while (task.questions.length < 5) {
+                    const nextNumber = task.questions.length + 1;
+                    task.questions.push({
+                        number: nextNumber,
+                        sql: `SELECT column_${nextNumber} FROM ${assessment.title.toLowerCase().replaceAll(" ", "_")} WHERE value ___ ${nextNumber};`,
+                        placeholder: "one word"
+                    });
+                }
+            });
+        });
+    }
+
+    function getAvailableTasks(assessmentId) {
+        return submitData.assessments[assessmentId].tasks.slice(0, submitData.group.memberCount);
+    }
+
+    function renderTaskOptions() {
+        const assessmentId = assessmentSelect.value;
+        const availableTasks = getAvailableTasks(assessmentId);
+        taskSelect.innerHTML = "";
+
+        availableTasks.forEach((task) => {
+            const option = document.createElement("option");
+            option.value = task.taskNo;
+            option.textContent = `Task ${task.taskNo} - ${task.status}`;
+            taskSelect.appendChild(option);
+        });
+
+        renderQuestions();
+    }
+
+    function renderQuestions() {
+        const assessmentId = assessmentSelect.value;
+        const taskNo = Number(taskSelect.value);
+        const task = submitData.assessments[assessmentId].tasks.find((item) => item.taskNo === taskNo);
+
+        questionList.innerHTML = "";
+        const isDone = task.status === "done";
+        submitAttemptButton.disabled = isDone;
+        submitAttemptButton.textContent = isDone ? "Task already done" : "Submit attempt";
+
+        const summary = document.createElement("article");
+        summary.className = "task-summary";
+        summary.innerHTML = `
+            <div>
+                <h2>${submitData.assessments[assessmentId].title} · Task ${task.taskNo}</h2>
+                <p>${isDone ? "This task is done. Answers are locked." : "This task is open for submission."} ${submitData.group.groupId} has ${submitData.group.memberCount} members, so Tasks 1-${submitData.group.memberCount} are available.</p>
+            </div>
+            <span class="status-badge ${task.status === "done" ? "full" : "partial"}">${task.status}</span>
+        `;
+        questionList.appendChild(summary);
+
+        task.questions.forEach((question) => {
+            const item = document.createElement("article");
+            item.className = "blank-question";
+            item.innerHTML = `
+                <label for="q${question.number}">Question ${question.number}</label>
+                <code>${question.sql}</code>
+                <input id="q${question.number}" name="q${question.number}" type="text" placeholder="${isDone ? "locked" : question.placeholder}" autocomplete="off" ${isDone ? "disabled" : ""}>
+            `;
+            questionList.appendChild(item);
+        });
+    }
+
+    submitData.rules.forEach((rule) => {
         const item = document.createElement("article");
         item.className = "task-item";
-        item.innerHTML = `<h3>${task.aid} / ${task.tid}</h3><p>${task.title}</p><span class="badge">Due ${task.due}</span>`;
-        sampleTaskList.appendChild(item);
+        item.innerHTML = `<h3>${rule.label}</h3><p>${rule.value}</p>`;
+        ruleList.appendChild(item);
     });
+
+    assessmentSelect.addEventListener("change", renderTaskOptions);
+    taskSelect.addEventListener("change", renderQuestions);
+    normalizeTaskQuestions();
+    renderTaskOptions();
 </script>
 {% endblock %}

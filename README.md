@@ -3,3 +3,6 @@ source .venv/bin/activate
 
 pip install flask
 pip install mysql-connector-python
+
+# run app
+flask --app flask_app run --debug

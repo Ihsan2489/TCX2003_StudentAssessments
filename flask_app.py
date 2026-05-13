@@ -29,6 +29,9 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if session.get('username') and request.method == 'GET':
+        return redirect(url_for('home'))
+
     if request.method == 'POST':
         # Get form data
         username = request.form.get('username', '').strip()
@@ -50,6 +53,7 @@ def login():
             if user and check_password_hash(user['password_hash'], password):
                 session['username'] = user['username']
                 session['full_name'] = user.get('full_name') or user['username']
+                session['email'] = user.get('email', '')
                 return redirect(url_for('home'))
             else:
                 message = 'Invalid username or password.'
@@ -63,6 +67,12 @@ def login():
             if connection and connection.is_connected():
                 connection.close()
     return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -128,6 +138,11 @@ def assessments():
     return render_template('assessments.html')
 
 
+@app.route('/groups')
+def groups():
+    return render_template('groups.html')
+
+
 @app.route('/score')
 def score():
     return render_template('score.html')
@@ -138,6 +153,35 @@ def leaderboard():
     return render_template('leaderboard.html')
 
 
-@app.route('/change-password')
-def change_password():
-    return render_template('change_password.html')
+@app.route('/profile')
+def profile():
+    username = session.get('username')
+    if not username:
+        return redirect(url_for('login'))
+
+    user = {
+        'username': username,
+        'full_name': session.get('full_name', username),
+        'email': session.get('email', '')
+    }
+
+    connection = None
+    cursor = None
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute('SELECT username, full_name, email FROM students WHERE username = %s', (username,))
+        db_user = cursor.fetchone()
+        if db_user:
+            user = db_user
+            session['full_name'] = db_user.get('full_name') or username
+            session['email'] = db_user.get('email', '')
+    except Error:
+        pass
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
+    return render_template('profile.html', user=user)

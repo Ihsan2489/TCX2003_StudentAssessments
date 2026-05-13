@@ -9,13 +9,17 @@
 <body>
     <header class="site-header">
         <nav class="nav-shell" aria-label="Main navigation">
-            <a class="brand" href="{{ url_for('home') }}">TCX2003 Ninja</a>
+            <a class="brand" href="{{ url_for('home') if session.get('username') else url_for('login') }}">TCX2003 Ninja</a>
             <div class="nav-links">
+                {% if session.get('username') %}
+                <a href="{{ url_for('home') }}">Home</a>
+                <a href="{{ url_for('groups') }}">Groups</a>
                 <a href="{{ url_for('assessments') }}">Assessments</a>
                 <a href="{{ url_for('score') }}">My Scores</a>
                 <a href="{{ url_for('leaderboard') }}">Leaderboard</a>
-                <a href="{{ url_for('change_password') }}">Password</a>
-                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('profile') }}">Profile</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+                {% endif %}
             </div>
         </nav>
     </header>
