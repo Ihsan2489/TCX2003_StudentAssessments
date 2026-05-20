@@ -7,125 +7,77 @@
     <div class="page-heading">
         <div>
             <h1 class="eyebrow">Leaderboard</h1>
-            <h3>Top 5 students and top 5 groups by assessment scores.</h3>
-            <p>Each assessment grade contributes to personal ranking and the student's group average.</p>
+            <h3>Top students by course assessment scores.</h3>
+            <p>Rankings use each student's best attempt per task. Late submissions show the 10% penalty in score pages.</p>
         </div>
     </div>
 
     <div class="filter-row">
-        <label for="assessment-filter">Filter by assessment:</label>    
-        <select id="assessment-filter" aria-label="Assessment filter">
+        <label for="course-filter">Filter by course:</label>
+        <select id="course-filter" aria-label="Course filter">
             <option value="overall">Overall</option>
-            <option value="A01">A01 - Book exchange joins</option>
-            <option value="A02">A02 - Aggregation practice</option>
+            <option value="CS2102">Database Systems</option>
+            <option value="CS1010">Introduction to Programming</option>
+            <option value="CS1231">Computing Maths</option>
         </select>
     </div>
-    
 
-    <div class="leaderboard-layout">
-        <section class="panel">
-            <div class="panel-heading">
-                <h2>Top students</h2>
-            </div>
-            <div class="leader-list" id="student-leader-list"></div>
-        </section>
-
-        <section class="panel">
-            <div class="panel-heading">
-                <h2>Top groups</h2>
-            </div>
-            <div class="leader-list" id="group-leader-list"></div>
-        </section>
-    </div>
+    <section class="panel">
+        <div class="panel-heading">
+            <h2>Top students</h2>
+        </div>
+        <div class="leader-list" id="student-leader-list"></div>
+    </section>
 </section>
 
 <script type="application/json" id="leaderboard-data">
 {
-    "students": {
-        "overall": [
-            {"rank": 1, "username": "student04", "group": "G04", "average": 98},
-            {"rank": 2, "username": "student01", "group": "G04", "average": 92},
-            {"rank": 3, "username": "student08", "group": "G06", "average": 88},
-            {"rank": 4, "username": "student03", "group": "G02", "average": 84},
-            {"rank": 5, "username": "student11", "group": "G08", "average": 81}
-        ],
-        "A01": [
-            {"rank": 1, "username": "student04", "group": "G04", "average": 100},
-            {"rank": 2, "username": "student01", "group": "G04", "average": 100},
-            {"rank": 3, "username": "student08", "group": "G06", "average": 90},
-            {"rank": 4, "username": "student03", "group": "G02", "average": 86},
-            {"rank": 5, "username": "student11", "group": "G08", "average": 82}
-        ],
-        "A02": [
-            {"rank": 1, "username": "student02", "group": "G01", "average": 95},
-            {"rank": 2, "username": "student06", "group": "G06", "average": 90},
-            {"rank": 3, "username": "student01", "group": "G04", "average": 82},
-            {"rank": 4, "username": "student09", "group": "G08", "average": 78},
-            {"rank": 5, "username": "student05", "group": "G03", "average": 72}
-        ]
-    },
-    "groups": {
-        "overall": [
-            {"rank": 1, "group": "G04", "average": 91, "students": ["student01", "student04", "student10", "student20"]},
-            {"rank": 2, "group": "G06", "average": 88, "students": ["student06", "student08", "student16"]},
-            {"rank": 3, "group": "G01", "average": 86, "students": ["student02", "student07", "student12"]},
-            {"rank": 4, "group": "G08", "average": 84, "students": ["student09", "student11", "student22"]},
-            {"rank": 5, "group": "G02", "average": 82, "students": ["student03", "student14", "student18"]}
-        ],
-        "A01": [
-            {"rank": 1, "group": "G04", "average": 100, "students": ["student01", "student04", "student10", "student20"]},
-            {"rank": 2, "group": "G06", "average": 92, "students": ["student06", "student08", "student16"]},
-            {"rank": 3, "group": "G08", "average": 89, "students": ["student09", "student11", "student22"]},
-            {"rank": 4, "group": "G02", "average": 86, "students": ["student03", "student14", "student18"]},
-            {"rank": 5, "group": "G01", "average": 84, "students": ["student02", "student07", "student12"]}
-        ],
-        "A02": [
-            {"rank": 1, "group": "G01", "average": 95, "students": ["student02", "student07", "student12"]},
-            {"rank": 2, "group": "G06", "average": 90, "students": ["student06", "student08", "student16"]},
-            {"rank": 3, "group": "G04", "average": 82, "students": ["student01", "student04", "student10", "student20"]},
-            {"rank": 4, "group": "G08", "average": 78, "students": ["student09", "student11", "student22"]},
-            {"rank": 5, "group": "G03", "average": 72, "students": ["student05", "student17"]}
-        ]
-    }
+    "overall": [
+        {"rank": 1, "username": "student04", "coursesJoined": 3, "tasksCompleted": 12, "assessmentsCompleted": 6, "average": 98},
+        {"rank": 2, "username": "student01", "coursesJoined": 2, "tasksCompleted": 8, "assessmentsCompleted": 4, "average": 92},
+        {"rank": 3, "username": "student08", "coursesJoined": 2, "tasksCompleted": 7, "assessmentsCompleted": 3, "average": 88},
+        {"rank": 4, "username": "student03", "coursesJoined": 1, "tasksCompleted": 4, "assessmentsCompleted": 2, "average": 84},
+        {"rank": 5, "username": "student11", "coursesJoined": 1, "tasksCompleted": 3, "assessmentsCompleted": 1, "average": 81}
+    ],
+    "CS2102": [
+        {"rank": 1, "username": "student04", "coursesJoined": 3, "tasksCompleted": 4, "assessmentsCompleted": 2, "average": 98},
+        {"rank": 2, "username": "student01", "coursesJoined": 2, "tasksCompleted": 4, "assessmentsCompleted": 2, "average": 92},
+        {"rank": 3, "username": "student11", "coursesJoined": 1, "tasksCompleted": 3, "assessmentsCompleted": 1, "average": 81}
+    ],
+    "CS1010": [
+        {"rank": 1, "username": "student08", "coursesJoined": 2, "tasksCompleted": 4, "assessmentsCompleted": 2, "average": 88},
+        {"rank": 2, "username": "student06", "coursesJoined": 2, "tasksCompleted": 3, "assessmentsCompleted": 1, "average": 83},
+        {"rank": 3, "username": "student12", "coursesJoined": 1, "tasksCompleted": 2, "assessmentsCompleted": 1, "average": 77}
+    ],
+    "CS1231": [
+        {"rank": 1, "username": "student03", "coursesJoined": 1, "tasksCompleted": 4, "assessmentsCompleted": 2, "average": 84},
+        {"rank": 2, "username": "student09", "coursesJoined": 2, "tasksCompleted": 3, "assessmentsCompleted": 1, "average": 79},
+        {"rank": 3, "username": "student05", "coursesJoined": 1, "tasksCompleted": 2, "assessmentsCompleted": 1, "average": 72}
+    ]
 }
 </script>
 
 <script>
     const leaderboardData = JSON.parse(document.getElementById("leaderboard-data").textContent);
-    const filter = document.getElementById("assessment-filter");
+    const filter = document.getElementById("course-filter");
     const studentLeaderList = document.getElementById("student-leader-list");
-    const groupLeaderList = document.getElementById("group-leader-list");
 
-    function renderLeaderboard(assessmentId) {
+    function renderLeaderboard(courseId) {
         studentLeaderList.innerHTML = "";
-        groupLeaderList.innerHTML = "";
-
-        leaderboardData.students[assessmentId].forEach((student) => {
+        leaderboardData[courseId].forEach((student) => {
             const item = document.createElement("article");
             item.className = "leader-row";
             item.innerHTML = `
-                <span class="leader-rank">${student.rank}</span>
-                <div>
-                    <h3>${student.username}</h3>
-                    <p>${student.group} · assessment grades counted</p>
+                <div class="leader-left">
+                    <span class="leader-rank">${student.rank}</span>
+                    <div>
+                        <h3>${student.username}</h3>
+                        <p>${student.coursesJoined} courses joined · ${student.tasksCompleted} tasks completed · ${student.assessmentsCompleted} assessments completed</p>
+                    </div>
                 </div>
-                <span class="badge">${student.average}% average</span>
+                <span class="badge leader-score">${student.average}% average</span>
             `;
             studentLeaderList.appendChild(item);
-        });
-
-        leaderboardData.groups[assessmentId].forEach((group) => {
-            const item = document.createElement("article");
-            item.className = "leader-row group-leader-row";
-            item.innerHTML = `
-                <span class="leader-rank">${group.rank}</span>
-                <div>
-                    <h3>${group.group}</h3>
-                    <p>${group.students.join(", ")}</p>
-                </div>
-                <span class="badge">${group.average}% average</span>
-            `;
-            groupLeaderList.appendChild(item);
         });
     }
 
