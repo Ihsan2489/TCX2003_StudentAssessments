@@ -40,10 +40,10 @@ CREATE TABLE sessions (
     -- 2. Assuming questions are loaded 1 by 1 on the browser, this will update everytime a student loads a new question
     last_activity DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
     expires_at DATETIME NOT NULL, 
+    logged_out_at DATETIME DEFAULT NULL, -- Added logout tracker 
     -- 3. meta data for audit / security 
     ip_address VARCHAR(45) DEFAULT NULL, 
     user_agent TEXT DEFAULT NULL,
-    logged_out_at DATETIME DEFAULT NULL -- Added logout tracker 
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE RESTRICT
 
 );
@@ -63,6 +63,15 @@ CREATE TABLE questions (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
+);
+
+CREATE TABLE assessments ( 
+    assessment_id INT AUTO_INCREMENT PRIMARY KEY, 
+    course_id INT NOT NULL, 
+    title VARCHAR(255) NOT NULL, 
+    description TEXT, 
+    due_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+    FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE
 );
 
 
