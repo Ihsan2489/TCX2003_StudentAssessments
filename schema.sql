@@ -92,7 +92,17 @@ CREATE TABLE attempts (
     FOREIGN KEY (task_id) REFERENCES task(task_id) ON DEFAULT CASCADE 
 ); 
 
-
+CREATE TABLE submitted_answers (
+    submitted_answer_id INT AUTO_INCREMENT PRIMARY KEY, 
+    attempt_id INT NOT NULL,  -- To connect back to the specific student session / attempt 
+    question_id INT NOT NULL, -- Which question are they answering 
+    chosen_option ENUM ('A', 'B', 'C', 'D') NOT NULL,  -- The student's answer 
+    is_correct BOOLEAN GENERATED ALWAYS AS (NULL), 
+    FOREIGN KEY (attempt_id) REFERENCES attempts(attempt_id) ON DELETE CASCADE, 
+    FOREIGN KEY (question_id) REFERENCES questions(questions_id) ON DELETE CASCADE, 
+    UNIQUE KEY unique_attempt_question (attempt_id, question_id) -- prevents answering the same question twice in 1 attempt 
+    
+); 
 
 
 
