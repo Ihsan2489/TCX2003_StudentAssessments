@@ -81,6 +81,17 @@ CREATE TABLE tasks (
     FOREIGN KEY (assessment_id) REFERENCES assessments(assessment_id) ON DEFAULT CASCADE
 ); 
 
+CREATE TABLE attempts (
+    attempt_id INT AUTO_INCREMENT PRIMARY KEY, 
+    student_id INT NOT NULL, 
+    task_id INT NOT NULL, 
+    started_at DATABASE NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+    submitted_at DATETIME DEFAULT NULL, -- For this NULL it means the attempt is still in progress 
+    score INT DEFAULT 0, 
+    FOREIGN KEY (student_id) REFERENCES student(id) ON DEFAULT CASCADE, 
+    FOREIGN KEY (task_id) REFERENCES task(task_id) ON DEFAULT CASCADE 
+); 
+
 
 
 
