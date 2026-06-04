@@ -44,11 +44,11 @@ CREATE TABLE sessions (
     ip_address VARCHAR(45) DEFAULT NULL, 
     user_agent TEXT DEFAULT NULL,
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE RESTRICT
-
 );
 
 CREATE TABLE questions (
-    question_id INT AUTO_INCREMENT PRIMARY KEY, 
+    question_id INT AUTO_INCREMENT PRIMARY KEY,
+    task_id IN NOT NULL,  
     question_text TEXT NOT NULL, 
     -- 1. columns to enter the 4 mcq options, assuming we are setting only 4 options per quesion 
     option_1 VARCHAR(255) NOT NULL, 
@@ -61,7 +61,7 @@ CREATE TABLE questions (
     points INT NOT NULL DEFAULT 1, 
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-
+    FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE 
 );
 
 CREATE TABLE assessments ( 
