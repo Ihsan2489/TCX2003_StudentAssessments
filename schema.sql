@@ -22,7 +22,7 @@ CREATE TABLE courses (
 
 
 CREATE TABLE student_courses (
-    enrollment_id INT AUTO_INCREMENT PRIMIARY KEY, 
+    enrollment_id INT AUTO_INCREMENT PRIMARY KEY, 
     student_id INT NOT NULL, -- Reference student table 
     course_id INT NOT NULL,  -- Reference courses table 
     enrollment_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
@@ -42,13 +42,14 @@ CREATE TABLE sessions (
     expires_at DATETIME NOT NULL, 
     -- 3. meta data for audit / security 
     ip_address VARCHAR(45) DEFAULT NULL, 
-    user_agent TEXT DEFAULT NULL, 
+    user_agent TEXT DEFAULT NULL,
+    logged_out_at DATETIME DEFAULT NULL -- Added logout tracker 
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE RESTRICT
 
 );
 
 CREATE TABLE questions (
-    quesion_id INT AUTO_INCREMENT PRIMARY KEY, 
+    question_id INT AUTO_INCREMENT PRIMARY KEY, 
     question_text TEXT NOT NULL, 
     -- 1. columns to enter the 4 mcq options, assuming we are setting only 4 options per quesion 
     option_1 VARCHAR(255) NOT NULL, 
