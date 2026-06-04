@@ -20,7 +20,6 @@ CREATE TABLE courses (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-
 CREATE TABLE student_courses (
     enrollment_id INT AUTO_INCREMENT PRIMARY KEY, 
     student_id INT NOT NULL, -- Reference student table 
@@ -73,6 +72,15 @@ CREATE TABLE assessments (
     due_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
     FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE
 );
+
+CREATE TABLE tasks (
+    task_id INT AUTO_INCREMENT PRIMARY KEY, 
+    assessment_id INT NOT NULL, 
+    task_name VARCHAR(255) NOT NULL, 
+    max_score INT NOT NULL DEFAULT 0, 
+    FOREIGN KEY (assessment_id) REFERENCES assessments(assessment_id) ON DEFAULT CASCADE
+); 
+
 
 
 
