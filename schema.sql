@@ -46,6 +46,23 @@ CREATE TABLE sessions (
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE RESTRICT
 );
 
+CREATE TABLE assessments ( 
+    assessment_id INT AUTO_INCREMENT PRIMARY KEY, 
+    course_id INT NOT NULL, 
+    title VARCHAR(255) NOT NULL, 
+    description TEXT, 
+    due_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+    FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE
+);
+
+CREATE TABLE tasks (
+    task_id INT AUTO_INCREMENT PRIMARY KEY, 
+    assessment_id INT NOT NULL, 
+    task_name VARCHAR(255) NOT NULL, 
+    max_score INT NOT NULL DEFAULT 0, 
+    FOREIGN KEY (assessment_id) REFERENCES assessments(assessment_id) ON DEFAULT CASCADE
+); 
+
 CREATE TABLE questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
     task_id IN NOT NULL,  
@@ -63,23 +80,6 @@ CREATE TABLE questions (
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE 
 );
-
-CREATE TABLE assessments ( 
-    assessment_id INT AUTO_INCREMENT PRIMARY KEY, 
-    course_id INT NOT NULL, 
-    title VARCHAR(255) NOT NULL, 
-    description TEXT, 
-    due_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
-    FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE
-);
-
-CREATE TABLE tasks (
-    task_id INT AUTO_INCREMENT PRIMARY KEY, 
-    assessment_id INT NOT NULL, 
-    task_name VARCHAR(255) NOT NULL, 
-    max_score INT NOT NULL DEFAULT 0, 
-    FOREIGN KEY (assessment_id) REFERENCES assessments(assessment_id) ON DEFAULT CASCADE
-); 
 
 CREATE TABLE attempts (
     attempt_id INT AUTO_INCREMENT PRIMARY KEY, 
