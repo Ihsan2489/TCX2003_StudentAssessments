@@ -43,7 +43,8 @@ CREATE TABLE sessions (
     -- 3. meta data for audit / security 
     ip_address VARCHAR(45) DEFAULT NULL, 
     user_agent TEXT DEFAULT NULL,
-    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE RESTRICT
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE 
+    -- 4. If student profile is deleted then delete active session as well 
 );
 
 CREATE TABLE assessments ( 
@@ -60,12 +61,12 @@ CREATE TABLE tasks (
     assessment_id INT NOT NULL, 
     task_name VARCHAR(255) NOT NULL, 
     max_score INT NOT NULL DEFAULT 0, 
-    FOREIGN KEY (assessment_id) REFERENCES assessments(assessment_id) ON DEFAULT CASCADE
+    FOREIGN KEY (assessment_id) REFERENCES assessments(assessment_id) ON DELETE CASCADE
 ); 
 
 CREATE TABLE questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
-    task_id IN NOT NULL,  
+    task_id INT NOT NULL,  
     question_text TEXT NOT NULL, 
     -- 1. columns to enter the 4 mcq options, assuming we are setting only 4 options per quesion 
     option_1 VARCHAR(255) NOT NULL, 
@@ -77,7 +78,7 @@ CREATE TABLE questions (
     --3. This just specifies that each question is worth 1 point by default, we can adjust this in the quesiton table 
     points INT NOT NULL DEFAULT 1, 
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE 
 );
 
@@ -85,11 +86,11 @@ CREATE TABLE attempts (
     attempt_id INT AUTO_INCREMENT PRIMARY KEY, 
     student_id INT NOT NULL, 
     task_id INT NOT NULL, 
-    started_at DATABASE NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+    started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
     submitted_at DATETIME DEFAULT NULL, -- For this NULL it means the attempt is still in progress 
     score INT DEFAULT 0, 
-    FOREIGN KEY (student_id) REFERENCES student(id) ON DEFAULT CASCADE, 
-    FOREIGN KEY (task_id) REFERENCES task(task_id) ON DEFAULT CASCADE 
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE, 
+    FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE 
 ); 
 
 CREATE TABLE submitted_answers (
@@ -97,9 +98,9 @@ CREATE TABLE submitted_answers (
     attempt_id INT NOT NULL,  -- To connect back to the specific student session / attempt 
     question_id INT NOT NULL, -- Which question are they answering 
     chosen_option ENUM ('A', 'B', 'C', 'D') NOT NULL,  -- The student's answer 
-    is_correct BOOLEAN GENERATED ALWAYS AS (NULL), 
+    is_correct BOOLEAN DEFAULT NULL, 
     FOREIGN KEY (attempt_id) REFERENCES attempts(attempt_id) ON DELETE CASCADE, 
-    FOREIGN KEY (question_id) REFERENCES questions(questions_id) ON DELETE CASCADE, 
+    FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE, 
     UNIQUE KEY unique_attempt_question (attempt_id, question_id) -- prevents answering the same question twice in 1 attempt 
     
 ); 
