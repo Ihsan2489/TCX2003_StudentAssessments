@@ -140,7 +140,37 @@ def assessments():
 
 @app.route('/courses')
 def courses():
-    return render_template('courses.html')
+    username = session.get('username')
+    if not username:
+        return redirect(url_for('login'))
+
+    courses = []
+    connection = None
+    cursor = None
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute('SELECT course_id, course_code, course_name FROM courses ORDER BY course_id')
+        db_courses = cursor.fetchall()
+        courses = [
+            {
+                'courseId': course['course_code'],
+                'name': course['course_name'],
+                'assessments': 2,
+                'tasksPerAssessment': 2,
+                'average': 0
+            }
+            for course in db_courses
+        ]
+    except Error:
+        pass
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+            
+    return render_template('courses.html', courses=courses)
 
 
 @app.route('/score')

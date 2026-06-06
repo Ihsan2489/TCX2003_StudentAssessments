@@ -26,39 +26,13 @@
     </div>
 </section>
 
-<script type="application/json" id="course-data">
-[
-    {
-        "courseId": "CS2102",
-        "name": "Database Systems",
-        "assessments": 2,
-        "tasksPerAssessment": 2,
-        "average": 86
-    },
-    {
-        "courseId": "CS1010",
-        "name": "Introduction to Programming",
-        "assessments": 2,
-        "tasksPerAssessment": 2,
-        "average": 82
-    },
-    {
-        "courseId": "CS1231",
-        "name": "Computing Maths",
-        "assessments": 2,
-        "tasksPerAssessment": 2,
-        "average": 79
-    }
-]
-</script>
-
 <script>
-    const courses = JSON.parse(document.getElementById("course-data").textContent);
+    const coursesData = {{ courses | tojson }};
     const courseGrid = document.getElementById("course-grid");
     const dropCourseModal = document.getElementById("drop-course-modal");
     const dropCourseCancelButton = document.getElementById("drop-course-cancel-button");
     const dropCourseConfirmButton = document.getElementById("drop-course-confirm-button");
-    let selectedCourseIds = ["CS2102", "CS1010"];
+    let selectedCourseIds = coursesData.slice(0, 2).map((course) => course.courseId);
     let pendingDropCourseId = null;
 
     function addCourse(courseId) {
@@ -85,7 +59,7 @@
 
     function renderCourses() {
         courseGrid.innerHTML = "";
-        courses.forEach((course) => {
+        coursesData.forEach((course) => {
             const isSelected = selectedCourseIds.includes(course.courseId);
             const card = document.createElement("article");
             card.className = `course-card ${isSelected ? "is-selected" : ""}`;
