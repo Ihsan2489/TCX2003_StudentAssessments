@@ -7,7 +7,7 @@
     <div class="page-heading">
         <div>
             <h1 class="eyebrow">Personal scores</h1>
-            <h3>View assessment grades and contribution to group score.</h3>
+            <h3>View assessment grades and personal scoring.</h3>
             <p>Each assessment score is based on task question sets, with up to 3 attempts per assessment.</p>
         </div>
         <a class="secondary-button" href="{{ url_for('assessments') }}">Resubmit SQL</a>
@@ -25,7 +25,6 @@
                 <th>Raw score</th>
                 <th>Penalty</th>
                 <th>Final score</th>
-                <th>Group contribution</th>
                 <th>Status</th>
             </tr>
         </thead>
@@ -37,14 +36,13 @@
 {
     "summary": [
         {"label": "Personal average", "value": "86%"},
-        {"label": "Group", "value": "G04"},
-        {"label": "Group average", "value": "91%"},
+        {"label": "Selected courses", "value": "CS2102, CS1010"},
         {"label": "Late penalties", "value": "1"}
     ],
     "submissions": [
-        {"aid": "A01", "title": "Book exchange joins", "questions": "5 / 5", "attempt": "2 of 3", "submitted": "12 May 2026 09:15", "rawScore": 100, "latePenalty": 0, "finalScore": 100, "groupContribution": 100, "status": "Completed"},
-        {"aid": "A02", "title": "Aggregation basics", "questions": "4 / 5", "attempt": "1 of 3", "submitted": "13 May 2026 11:20", "rawScore": 80, "latePenalty": 0, "finalScore": 80, "groupContribution": 80, "status": "Can retry"},
-        {"aid": "A03", "title": "Subqueries and filters", "questions": "4 / 5", "attempt": "3 of 3", "submitted": "20 May 2026 15:40", "rawScore": 78, "latePenalty": 10, "finalScore": 70.2, "groupContribution": 70.2, "status": "Late penalty"}
+        {"aid": "A01", "title": "Book exchange joins", "questions": "5 / 5", "attempt": "2 of 3", "submitted": "12 May 2026 09:15", "rawScore": 100, "latePenalty": 0, "finalScore": 100, "status": "Completed"},
+        {"aid": "A02", "title": "Aggregation basics", "questions": "4 / 5", "attempt": "1 of 3", "submitted": "13 May 2026 11:20", "rawScore": 80, "latePenalty": 0, "finalScore": 80, "status": "Can retry"},
+        {"aid": "A02", "title": "Subqueries and filters", "questions": "4 / 5", "attempt": "3 of 3", "submitted": "20 May 2026 15:40", "rawScore": 78, "latePenalty": 10, "finalScore": 70.2, "status": "Late penalty"}
     ]
 }
 </script>
@@ -72,7 +70,6 @@
             <td>${submission.rawScore}%</td>
             <td>${submission.latePenalty ? `-${submission.latePenalty}%` : "None"}</td>
             <td>${submission.finalScore}%</td>
-            <td>${submission.groupContribution}%</td>
             <td><span class="status-badge ${statusClass}">${submission.status}</span></td>
         `;
         tableBody.appendChild(row);

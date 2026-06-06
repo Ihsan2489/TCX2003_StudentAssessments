@@ -1,0 +1,129 @@
+{% extends "layout.html" %}
+
+{% block title %}Choose Courses{% endblock %}
+
+{% block content %}
+<section class="courses-page">
+    <div class="page-heading">
+        <div>
+            <h1 class="eyebrow">Courses</h1>
+            <h3>Choose one or more available courses.</h3>
+            <p>Each course has 2 assessments. Each assessment has 2 tasks, and each task allows 3 attempts.</p>
+        </div>
+    </div>
+
+    <div class="course-grid" id="course-grid"></div>
+
+    <div class="modal-backdrop" id="drop-course-modal" hidden>
+        <section class="modal" role="dialog" aria-modal="true" aria-labelledby="drop-course-modal-title">
+            <h2 id="drop-course-modal-title">Drop course?</h2>
+            <p>Dropping this course will also remove its assessments and scores from your account.</p>
+            <div class="modal-actions">
+                <button class="secondary-button" id="drop-course-cancel-button" type="button">Cancel</button>
+                <button class="primary-button" id="drop-course-confirm-button" type="button">Drop course</button>
+            </div>
+        </section>
+    </div>
+</section>
+
+<script type="application/json" id="course-data">
+[
+    {
+        "courseId": "CS2102",
+        "name": "Database Systems",
+        "assessments": 2,
+        "tasksPerAssessment": 2,
+        "average": 86
+    },
+    {
+        "courseId": "CS1010",
+        "name": "Introduction to Programming",
+        "assessments": 2,
+        "tasksPerAssessment": 2,
+        "average": 82
+    },
+    {
+        "courseId": "CS1231",
+        "name": "Computing Maths",
+        "assessments": 2,
+        "tasksPerAssessment": 2,
+        "average": 79
+    }
+]
+</script>
+
+<script>
+    const courses = JSON.parse(document.getElementById("course-data").textContent);
+    const courseGrid = document.getElementById("course-grid");
+    const dropCourseModal = document.getElementById("drop-course-modal");
+    const dropCourseCancelButton = document.getElementById("drop-course-cancel-button");
+    const dropCourseConfirmButton = document.getElementById("drop-course-confirm-button");
+    let selectedCourseIds = ["CS2102", "CS1010"];
+    let pendingDropCourseId = null;
+
+    function addCourse(courseId) {
+        selectedCourseIds.push(courseId);
+        renderCourses();
+    }
+
+    function openDropCourseModal(courseId) {
+        pendingDropCourseId = courseId;
+        dropCourseModal.hidden = false;
+        dropCourseCancelButton.focus();
+    }
+
+    function closeDropCourseModal() {
+        pendingDropCourseId = null;
+        dropCourseModal.hidden = true;
+    }
+
+    function confirmDropCourse() {
+        selectedCourseIds = selectedCourseIds.filter((id) => id !== pendingDropCourseId);
+        closeDropCourseModal();
+        renderCourses();
+    }
+
+    function renderCourses() {
+        courseGrid.innerHTML = "";
+        courses.forEach((course) => {
+            const isSelected = selectedCourseIds.includes(course.courseId);
+            const card = document.createElement("article");
+            card.className = `course-card ${isSelected ? "is-selected" : ""}`;
+            card.innerHTML = `
+                <div class="course-card-main">
+                    <div class="course-card-header">
+                        <span class="badge">${course.courseId}</span>
+                        ${isSelected ? '<span class="status-badge full">Selected</span>' : ''}
+                    </div>
+                    <h2>${course.name}</h2>
+                    <p>${course.assessments} assessments · ${course.tasksPerAssessment} tasks per assessment · ${course.average}% average</p>
+                </div>
+                <button class="secondary-button" type="button">${isSelected ? "Drop course" : "Add course"}</button>
+            `;
+            card.querySelector("button").addEventListener("click", () => {
+                if (isSelected) {
+                    openDropCourseModal(course.courseId);
+                } else {
+                    addCourse(course.courseId);
+                }
+            });
+            courseGrid.appendChild(card);
+        });
+    }
+
+    dropCourseCancelButton.addEventListener("click", closeDropCourseModal);
+    dropCourseConfirmButton.addEventListener("click", confirmDropCourse);
+    dropCourseModal.addEventListener("click", (event) => {
+        if (event.target === dropCourseModal) {
+            closeDropCourseModal();
+        }
+    });
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !dropCourseModal.hidden) {
+            closeDropCourseModal();
+        }
+    });
+
+    renderCourses();
+</script>
+{% endblock %}

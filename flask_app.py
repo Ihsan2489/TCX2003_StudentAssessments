@@ -138,9 +138,9 @@ def assessments():
     return render_template('assessments.html')
 
 
-@app.route('/groups')
-def groups():
-    return render_template('groups.html')
+@app.route('/courses')
+def courses():
+    return render_template('courses.html')
 
 
 @app.route('/score')

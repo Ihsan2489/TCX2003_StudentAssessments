@@ -13,12 +13,12 @@
             <div class="nav-links">
                 {% if session.get('username') %}
                 <a href="{{ url_for('home') }}">Home</a>
-                <a href="{{ url_for('groups') }}">Groups</a>
+                <a href="{{ url_for('courses') }}">Courses</a>
                 <a href="{{ url_for('assessments') }}">Assessments</a>
                 <a href="{{ url_for('score') }}">My Scores</a>
                 <a href="{{ url_for('leaderboard') }}">Leaderboard</a>
                 <a href="{{ url_for('profile') }}">Profile</a>
-                <a href="{{ url_for('logout') }}">Logout</a>
+                <button class="nav-button" id="logout-open-button" type="button">Logout</button>
                 {% endif %}
             </div>
         </nav>
@@ -27,5 +27,47 @@
     <main class="page-shell">
         {% block content %}{% endblock %}
     </main>
+
+    {% if session.get('username') %}
+    <div class="modal-backdrop" id="logout-modal" hidden>
+        <section class="modal" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
+            <h2 id="logout-modal-title">Log out?</h2>
+            <p>You will need to sign in again to access courses, assessments, scores, and your profile.</p>
+            <div class="modal-actions">
+                <button class="secondary-button" id="logout-cancel-button" type="button">Cancel</button>
+                <a class="primary-button modal-primary-link" href="{{ url_for('logout') }}">Log out</a>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const logoutOpenButton = document.getElementById("logout-open-button");
+        const logoutCancelButton = document.getElementById("logout-cancel-button");
+        const logoutModal = document.getElementById("logout-modal");
+
+        function openLogoutModal() {
+            logoutModal.hidden = false;
+            logoutCancelButton.focus();
+        }
+
+        function closeLogoutModal() {
+            logoutModal.hidden = true;
+            logoutOpenButton.focus();
+        }
+
+        logoutOpenButton.addEventListener("click", openLogoutModal);
+        logoutCancelButton.addEventListener("click", closeLogoutModal);
+        logoutModal.addEventListener("click", (event) => {
+            if (event.target === logoutModal) {
+                closeLogoutModal();
+            }
+        });
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && !logoutModal.hidden) {
+                closeLogoutModal();
+            }
+        });
+    </script>
+    {% endif %}
 </body>
 </html>

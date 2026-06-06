@@ -7,10 +7,10 @@
     <div class="page-heading">
         <div>
             <h1 class="eyebrow">Hello, {{ user.username }}!</h1>
-            <h3>Monitor your assessment attempts, personal score, and group standing.</h3>
-            <p>Each assessment contains 5 ordered tasks. Each task has its own SQL fill-in-the-blank question set.</p>
+            <h3>Monitor your course assessments, task attempts, and personal score.</h3>
+            <p>Each assessment contains 2 ordered tasks. Each task has its own fill-in-the-blank question set.</p>
         </div>
-        <a class="secondary-button" href="{{ url_for('groups') }}">Join group</a>
+        <a class="secondary-button" href="{{ url_for('courses') }}">Choose courses</a>
     </div>
 
     <div class="stat-grid" id="home-stats"></div>
@@ -36,20 +36,19 @@
 <script type="application/json" id="home-data">
 {
     "stats": [
-        {"label": "Joined group", "value": "G04"},
-        {"label": "Assessments", "value": "3"},
-        {"label": "Personal average", "value": "86%"},
-        {"label": "Group average", "value": "91%"}
+        {"label": "Selected courses", "value": "2"},
+        {"label": "Assessments", "value": "4"},
+        {"label": "Tasks", "value": "8"},
+        {"label": "Personal average", "value": "86%"}
     ],
     "recentAttempts": [
         {"aid": "A01", "title": "Book exchange joins", "attempt": 2, "score": "100%", "status": "Completed"},
         {"aid": "A02", "title": "Aggregation basics", "attempt": 1, "score": "80%", "status": "In progress"},
-        {"aid": "A03", "title": "Subqueries and filters", "attempt": 3, "score": "78%", "status": "Final attempt"}
+        {"aid": "A02", "title": "Subqueries and filters", "attempt": 3, "score": "78%", "status": "Final attempt"}
     ],
     "openTasks": [
         {"aid": "A02", "title": "Aggregation basics", "attempts": "1 of 3 used", "due": "18 May 2026"},
-        {"aid": "A04", "title": "Nested query practice", "attempts": "0 of 3 used", "due": "25 May 2026"},
-        {"aid": "A05", "title": "Updates and constraints", "attempts": "0 of 3 used", "due": "28 May 2026"}
+        {"aid": "A02", "title": "Nested query practice", "attempts": "0 of 3 used", "due": "25 May 2026"}
     ]
 }
 </script>
