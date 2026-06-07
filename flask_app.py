@@ -135,6 +135,10 @@ def home():
 
 @app.route('/assessments')
 def assessments():
+    username = session.get('username')
+    if not username:
+        return redirect(url_for('login'))
+    
     return render_template('assessments.html')
 
 
@@ -175,11 +179,19 @@ def courses():
 
 @app.route('/score')
 def score():
+    username = session.get('username')
+    if not username:
+        return redirect(url_for('login'))
+    
     return render_template('score.html')
 
 
 @app.route('/leaderboard')
 def leaderboard():
+    username = session.get('username')
+    if not username:
+        return redirect(url_for('login'))
+    
     return render_template('leaderboard.html')
 
 
