@@ -14,6 +14,17 @@
 
     <div class="course-grid" id="course-grid"></div>
 
+    <div class="modal-backdrop" id="add-course-modal" hidden>
+        <section class="modal" role="dialog" aria-modal="true" aria-labelledby="add-course-modal-title">
+            <h2 id="add-course-modal-title">Add course?</h2>
+            <p>Adding this course will make its assessments and tasks available in your account.</p>
+            <div class="modal-actions">
+                <button class="secondary-button" id="add-course-cancel-button" type="button">Cancel</button>
+                <button class="primary-button" id="add-course-confirm-button" type="button">Add course</button>
+            </div>
+        </section>
+    </div>
+
     <div class="modal-backdrop" id="drop-course-modal" hidden>
         <section class="modal" role="dialog" aria-modal="true" aria-labelledby="drop-course-modal-title">
             <h2 id="drop-course-modal-title">Drop course?</h2>
@@ -29,14 +40,32 @@
 <script>
     const coursesData = {{ courses | tojson }};
     const courseGrid = document.getElementById("course-grid");
+    const addCourseModal = document.getElementById("add-course-modal");
+    const addCourseCancelButton = document.getElementById("add-course-cancel-button");
+    const addCourseConfirmButton = document.getElementById("add-course-confirm-button");
     const dropCourseModal = document.getElementById("drop-course-modal");
     const dropCourseCancelButton = document.getElementById("drop-course-cancel-button");
     const dropCourseConfirmButton = document.getElementById("drop-course-confirm-button");
     let selectedCourseIds = coursesData.slice(0, 2).map((course) => course.courseId);
+    let pendingAddCourseId = null;
     let pendingDropCourseId = null;
 
-    function addCourse(courseId) {
-        selectedCourseIds.push(courseId);
+    function openAddCourseModal(courseId) {
+        pendingAddCourseId = courseId;
+        addCourseModal.hidden = false;
+        addCourseCancelButton.focus();
+    }
+
+    function closeAddCourseModal() {
+        pendingAddCourseId = null;
+        addCourseModal.hidden = true;
+    }
+
+    function confirmAddCourse() {
+        if (pendingAddCourseId && !selectedCourseIds.includes(pendingAddCourseId)) {
+            selectedCourseIds.push(pendingAddCourseId);
+        }
+        closeAddCourseModal();
         renderCourses();
     }
 
@@ -78,13 +107,20 @@
                 if (isSelected) {
                     openDropCourseModal(course.courseId);
                 } else {
-                    addCourse(course.courseId);
+                    openAddCourseModal(course.courseId);
                 }
             });
             courseGrid.appendChild(card);
         });
     }
 
+    addCourseCancelButton.addEventListener("click", closeAddCourseModal);
+    addCourseConfirmButton.addEventListener("click", confirmAddCourse);
+    addCourseModal.addEventListener("click", (event) => {
+        if (event.target === addCourseModal) {
+            closeAddCourseModal();
+        }
+    });
     dropCourseCancelButton.addEventListener("click", closeDropCourseModal);
     dropCourseConfirmButton.addEventListener("click", confirmDropCourse);
     dropCourseModal.addEventListener("click", (event) => {
@@ -93,6 +129,9 @@
         }
     });
     document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !addCourseModal.hidden) {
+            closeAddCourseModal();
+        }
         if (event.key === "Escape" && !dropCourseModal.hidden) {
             closeDropCourseModal();
         }
