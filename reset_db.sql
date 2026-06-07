@@ -1,0 +1,6 @@
+DROP DATABASE IF EXISTS TCX2003_Project;
+CREATE DATABASE TCX2003_Project;
+USE TCX2003_Project;
+
+SOURCE schema.sql;
+SOURCE seed.sql;

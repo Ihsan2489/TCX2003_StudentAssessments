@@ -1,7 +1,7 @@
 CREATE DATABASE IF NOT EXISTS TCX2003_Project;
 USE TCX2003_Project;
 
-CREATE TABLE students (
+CREATE TABLE IF NOT EXISTS students (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     full_name VARCHAR(100) NOT NULL,
@@ -10,23 +10,23 @@ CREATE TABLE students (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE courses (
+CREATE TABLE IF NOT EXISTS courses (
     course_id INT AUTO_INCREMENT PRIMARY KEY,
     course_name VARCHAR(100) NOT NULL,
     course_code VARCHAR(20) NOT NULL UNIQUE,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE enrollment (
+CREATE TABLE IF NOT EXISTS enrollment (
     student_id INT NOT NULL, -- Reference student table 
     course_id INT NOT NULL,  -- Reference courses table 
     PRIMARY KEY (student_id, course_id), -- Composite primary key to prevent duplicate enrollments
     enrollment_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE, -- should this be restrict 
-    FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE, -- should this be restrict instead?
+    FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE -- should this be restrict instead?
 );
 
-CREATE TABLE sessions (
+CREATE TABLE IF NOT EXISTS sessions (
     session_id INT AUTO_INCREMENT PRIMARY KEY, 
     student_id INT NOT NULL, -- References student table 
     -- 1. Token to identify student's activity / browser session 
@@ -41,7 +41,7 @@ CREATE TABLE sessions (
     -- 4. If student profile is deleted then delete active session as well 
 );
 
-CREATE TABLE assessments ( 
+CREATE TABLE IF NOT EXISTS assessments ( 
     assessment_id INT AUTO_INCREMENT PRIMARY KEY, 
     course_id INT NOT NULL, 
     title VARCHAR(255) NOT NULL, 
@@ -51,7 +51,7 @@ CREATE TABLE assessments (
     FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE
 );
 
-CREATE TABLE tasks (
+CREATE TABLE IF NOT EXISTS tasks (
     task_id INT AUTO_INCREMENT PRIMARY KEY, 
     assessment_id INT NOT NULL, 
     title VARCHAR(255) NOT NULL, 
@@ -61,7 +61,7 @@ CREATE TABLE tasks (
     FOREIGN KEY (assessment_id) REFERENCES assessments(assessment_id) ON DELETE CASCADE
 ); 
 
-CREATE TABLE questions (
+CREATE TABLE IF NOT EXISTS questions (
     question_id INT AUTO_INCREMENT PRIMARY KEY,
     task_id INT NOT NULL,  
     question_text TEXT NOT NULL, 
@@ -77,7 +77,7 @@ CREATE TABLE questions (
     FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE 
 );
 
-CREATE TABLE attempts (
+CREATE TABLE IF NOT EXISTS attempts (
     attempt_id INT AUTO_INCREMENT PRIMARY KEY, 
     student_id INT NOT NULL, 
     task_id INT NOT NULL, 
@@ -93,7 +93,7 @@ CREATE TABLE attempts (
     UNIQUE KEY unique_student_task_attempt (student_id, task_id, attempt_number) -- To prevent duplicate attempt numbers for the same student and task
 ); 
 
-CREATE TABLE submitted_answers (
+CREATE TABLE IF NOT EXISTS submitted_answers (
     submitted_answer_id INT AUTO_INCREMENT PRIMARY KEY, 
     attempt_id INT NOT NULL,  -- To connect back to the specific student session / attempt 
     question_id INT NOT NULL, -- Which question are they answering 
@@ -104,6 +104,5 @@ CREATE TABLE submitted_answers (
     FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE, 
     UNIQUE KEY unique_attempt_question (attempt_id, question_id) -- prevents answering the same question twice in 1 attempt 
 ); 
-
 
 
