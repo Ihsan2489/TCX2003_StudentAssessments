@@ -185,3 +185,6 @@ def profile():
             connection.close()
 
     return render_template('profile.html', user=user)
+
+if __name__ == "__main__":
+    app.run(debug=True)
