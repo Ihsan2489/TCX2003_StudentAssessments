@@ -149,32 +149,153 @@ def courses():
         return redirect(url_for('login'))
 
     courses = []
+    message = session.pop('course_message', '')
     connection = None
     cursor = None
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        cursor.execute('SELECT course_id, course_code, course_name FROM courses ORDER BY course_id')
+        cursor.execute('SELECT id FROM students WHERE username = %s', (username,))
+        student = cursor.fetchone()
+        if not student:
+            session.clear()
+            return redirect(url_for('login'))
+
+        cursor.execute(
+            '''
+            SELECT
+                c.course_id,
+                c.course_code,
+                c.course_name,
+                COUNT(DISTINCT a.assessment_id) AS assessment_count,
+                COUNT(DISTINCT t.task_id) AS task_count,
+                CASE WHEN e.student_id IS NULL THEN 0 ELSE 1 END AS is_enrolled
+            FROM courses c
+            LEFT JOIN assessments a ON a.course_id = c.course_id
+            LEFT JOIN tasks t ON t.assessment_id = a.assessment_id
+            LEFT JOIN enrollment e
+                ON e.course_id = c.course_id
+                AND e.student_id = %s
+            GROUP BY c.course_id, c.course_code, c.course_name, e.student_id
+            ORDER BY c.course_code
+            ''',
+            (student['id'],)
+        )
         db_courses = cursor.fetchall()
         courses = [
             {
-                'courseId': course['course_code'],
+                'courseId': course['course_id'],
+                'code': course['course_code'],
                 'name': course['course_name'],
-                'assessments': 2,
-                'tasksPerAssessment': 2,
-                'average': 0
+                'assessments': course['assessment_count'],
+                'tasks': course['task_count'],
+                'isSelected': bool(course['is_enrolled'])
             }
             for course in db_courses
         ]
-    except Error:
-        pass
+    except Error as error:
+        message = f'Database error: {error}'
     finally:
         if cursor:
             cursor.close()
         if connection and connection.is_connected():
             connection.close()
             
-    return render_template('courses.html', courses=courses)
+    return render_template('courses.html', courses=courses, message=message)
+
+
+@app.route('/courses/add', methods=['POST'])
+def add_course():
+    username = session.get('username')
+    if not username:
+        return redirect(url_for('login'))
+
+    course_id = request.form.get('course_id', type=int)
+    if not course_id:
+        session['course_message'] = 'Invalid course selected.'
+        return redirect(url_for('courses'))
+
+    connection = None
+    cursor = None
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute('SELECT id FROM students WHERE username = %s', (username,))
+        student = cursor.fetchone()
+        if not student:
+            session.clear()
+            return redirect(url_for('login'))
+
+        cursor.execute('SELECT course_code FROM courses WHERE course_id = %s', (course_id,))
+        course = cursor.fetchone()
+        if not course:
+            session['course_message'] = 'Course not found.'
+            return redirect(url_for('courses'))
+
+        cursor.execute(
+            'INSERT IGNORE INTO enrollment (student_id, course_id) VALUES (%s, %s)',
+            (student['id'], course_id)
+        )
+        connection.commit()
+        session['course_message'] = f'Added {course["course_code"]}.'
+    except Error as error:
+        if connection:
+            connection.rollback()
+        session['course_message'] = f'Database error: {error}'
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
+    return redirect(url_for('courses'))
+
+
+@app.route('/courses/drop', methods=['POST'])
+def drop_course():
+    username = session.get('username')
+    if not username:
+        return redirect(url_for('login'))
+
+    course_id = request.form.get('course_id', type=int)
+    if not course_id:
+        session['course_message'] = 'Invalid course selected.'
+        return redirect(url_for('courses'))
+
+    connection = None
+    cursor = None
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute('SELECT id FROM students WHERE username = %s', (username,))
+        student = cursor.fetchone()
+        if not student:
+            session.clear()
+            return redirect(url_for('login'))
+
+        cursor.execute('SELECT course_code FROM courses WHERE course_id = %s', (course_id,))
+        course = cursor.fetchone()
+        if not course:
+            session['course_message'] = 'Course not found.'
+            return redirect(url_for('courses'))
+
+        cursor.execute(
+            'DELETE FROM enrollment WHERE student_id = %s AND course_id = %s',
+            (student['id'], course_id)
+        )
+        connection.commit()
+        session['course_message'] = f'Dropped {course["course_code"]}.'
+    except Error as error:
+        if connection:
+            connection.rollback()
+        session['course_message'] = f'Database error: {error}'
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
+    return redirect(url_for('courses'))
 
 
 @app.route('/score')

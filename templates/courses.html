@@ -12,117 +12,124 @@
         </div>
     </div>
 
-    <div class="course-grid" id="course-grid"></div>
+    {% if message %}
+    <p class="form-message">{{ message }}</p>
+    {% endif %}
+
+    <div class="course-grid">
+        {% for course in courses %}
+        <article class="course-card {% if course.isSelected %}is-selected{% endif %}">
+            <div class="course-card-main">
+                <div class="course-card-header">
+                    <span class="badge">{{ course.code }}</span>
+                    {% if course.isSelected %}
+                    <span class="status-badge full">Selected</span>
+                    {% endif %}
+                </div>
+                <h2>{{ course.name }}</h2>
+                <p>{{ course.assessments }} assessments · {{ course.tasks }} tasks</p>
+            </div>
+            <button
+                class="secondary-button course-action-button"
+                type="button"
+                data-course-id="{{ course.courseId }}"
+                data-course-code="{{ course.code }}"
+                data-course-name="{{ course.name }}"
+                data-action="{{ 'drop' if course.isSelected else 'add' }}"
+            >
+                {{ 'Drop course' if course.isSelected else 'Add course' }}
+            </button>
+        </article>
+        {% else %}
+        <section class="panel">
+            <h2>No courses available</h2>
+            <p>Courses will appear here after seed data is loaded.</p>
+        </section>
+        {% endfor %}
+    </div>
 
     <div class="modal-backdrop" id="add-course-modal" hidden>
-        <section class="modal" role="dialog" aria-modal="true" aria-labelledby="add-course-modal-title">
+        <form class="modal" action="{{ url_for('add_course') }}" method="post" role="dialog" aria-modal="true" aria-labelledby="add-course-modal-title">
             <h2 id="add-course-modal-title">Add course?</h2>
-            <p>Adding this course will make its assessments and tasks available in your account.</p>
+            <p id="add-course-message">Adding this course will make its assessments and tasks available in your account.</p>
+            <input id="add-course-id" name="course_id" type="hidden">
             <div class="modal-actions">
                 <button class="secondary-button" id="add-course-cancel-button" type="button">Cancel</button>
-                <button class="primary-button" id="add-course-confirm-button" type="button">Add course</button>
+                <button class="primary-button" id="add-course-confirm-button" type="submit">Add course</button>
             </div>
-        </section>
+        </form>
     </div>
 
     <div class="modal-backdrop" id="drop-course-modal" hidden>
-        <section class="modal" role="dialog" aria-modal="true" aria-labelledby="drop-course-modal-title">
+        <form class="modal" action="{{ url_for('drop_course') }}" method="post" role="dialog" aria-modal="true" aria-labelledby="drop-course-modal-title">
             <h2 id="drop-course-modal-title">Drop course?</h2>
-            <p>Dropping this course will also remove its assessments and scores from your account.</p>
+            <p id="drop-course-message">Dropping this course will remove it from your account.</p>
+            <input id="drop-course-id" name="course_id" type="hidden">
             <div class="modal-actions">
                 <button class="secondary-button" id="drop-course-cancel-button" type="button">Cancel</button>
-                <button class="primary-button" id="drop-course-confirm-button" type="button">Drop course</button>
+                <button class="primary-button" id="drop-course-confirm-button" type="submit">Drop course</button>
             </div>
-        </section>
+        </form>
     </div>
 </section>
 
 <script>
-    const coursesData = {{ courses | tojson }};
-    const courseGrid = document.getElementById("course-grid");
     const addCourseModal = document.getElementById("add-course-modal");
     const addCourseCancelButton = document.getElementById("add-course-cancel-button");
-    const addCourseConfirmButton = document.getElementById("add-course-confirm-button");
+    const addCourseIdInput = document.getElementById("add-course-id");
+    const addCourseMessage = document.getElementById("add-course-message");
     const dropCourseModal = document.getElementById("drop-course-modal");
     const dropCourseCancelButton = document.getElementById("drop-course-cancel-button");
-    const dropCourseConfirmButton = document.getElementById("drop-course-confirm-button");
-    let selectedCourseIds = coursesData.slice(0, 2).map((course) => course.courseId);
-    let pendingAddCourseId = null;
-    let pendingDropCourseId = null;
+    const dropCourseIdInput = document.getElementById("drop-course-id");
+    const dropCourseMessage = document.getElementById("drop-course-message");
 
-    function openAddCourseModal(courseId) {
-        pendingAddCourseId = courseId;
+    function openAddCourseModal(course) {
+        addCourseIdInput.value = course.id;
+        addCourseMessage.textContent = `Adding ${course.code} - ${course.name} will make its assessments and tasks available in your account.`;
         addCourseModal.hidden = false;
         addCourseCancelButton.focus();
     }
 
     function closeAddCourseModal() {
-        pendingAddCourseId = null;
+        addCourseIdInput.value = "";
         addCourseModal.hidden = true;
     }
 
-    function confirmAddCourse() {
-        if (pendingAddCourseId && !selectedCourseIds.includes(pendingAddCourseId)) {
-            selectedCourseIds.push(pendingAddCourseId);
-        }
-        closeAddCourseModal();
-        renderCourses();
-    }
-
-    function openDropCourseModal(courseId) {
-        pendingDropCourseId = courseId;
+    function openDropCourseModal(course) {
+        dropCourseIdInput.value = course.id;
+        dropCourseMessage.textContent = `Dropping ${course.code} - ${course.name} will remove it from your account.`;
         dropCourseModal.hidden = false;
         dropCourseCancelButton.focus();
     }
 
     function closeDropCourseModal() {
-        pendingDropCourseId = null;
+        dropCourseIdInput.value = "";
         dropCourseModal.hidden = true;
     }
 
-    function confirmDropCourse() {
-        selectedCourseIds = selectedCourseIds.filter((id) => id !== pendingDropCourseId);
-        closeDropCourseModal();
-        renderCourses();
-    }
+    document.querySelectorAll(".course-action-button").forEach((button) => {
+        button.addEventListener("click", () => {
+            const course = {
+                id: button.dataset.courseId,
+                code: button.dataset.courseCode,
+                name: button.dataset.courseName
+            };
 
-    function renderCourses() {
-        courseGrid.innerHTML = "";
-        coursesData.forEach((course) => {
-            const isSelected = selectedCourseIds.includes(course.courseId);
-            const card = document.createElement("article");
-            card.className = `course-card ${isSelected ? "is-selected" : ""}`;
-            card.innerHTML = `
-                <div class="course-card-main">
-                    <div class="course-card-header">
-                        <span class="badge">${course.courseId}</span>
-                        ${isSelected ? '<span class="status-badge full">Selected</span>' : ''}
-                    </div>
-                    <h2>${course.name}</h2>
-                    <p>${course.assessments} assessments · ${course.tasksPerAssessment} tasks per assessment · ${course.average}% average</p>
-                </div>
-                <button class="secondary-button" type="button">${isSelected ? "Drop course" : "Add course"}</button>
-            `;
-            card.querySelector("button").addEventListener("click", () => {
-                if (isSelected) {
-                    openDropCourseModal(course.courseId);
-                } else {
-                    openAddCourseModal(course.courseId);
-                }
-            });
-            courseGrid.appendChild(card);
+            if (button.dataset.action === "drop") {
+                openDropCourseModal(course);
+            } else {
+                openAddCourseModal(course);
+            }
         });
-    }
+    });
 
     addCourseCancelButton.addEventListener("click", closeAddCourseModal);
-    addCourseConfirmButton.addEventListener("click", confirmAddCourse);
     addCourseModal.addEventListener("click", (event) => {
         if (event.target === addCourseModal) {
             closeAddCourseModal();
         }
     });
     dropCourseCancelButton.addEventListener("click", closeDropCourseModal);
-    dropCourseConfirmButton.addEventListener("click", confirmDropCourse);
     dropCourseModal.addEventListener("click", (event) => {
         if (event.target === dropCourseModal) {
             closeDropCourseModal();
@@ -136,7 +143,5 @@
             closeDropCourseModal();
         }
     });
-
-    renderCourses();
 </script>
 {% endblock %}
