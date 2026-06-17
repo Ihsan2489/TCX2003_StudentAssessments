@@ -90,9 +90,13 @@ CREATE TABLE IF NOT EXISTS attempts (
     status ENUM('in_progress', 'submitted', 'graded') NOT NULL DEFAULT 'in_progress',
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE, 
     FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE,
-    CONSTRAINT check_attempt_number CHECK (attempt_number BETWEEN 1 AND 3),
     UNIQUE KEY unique_student_task_attempt (student_id, task_id, attempt_number) -- To prevent duplicate attempt numbers for the same student and task
 ); 
+
+-- If your MySQL version is 8.0.16 or newer, this optional constraint can also
+-- enforce the 3-attempt rule at the database layer:
+-- ALTER TABLE attempts
+-- ADD CONSTRAINT check_attempt_number CHECK (attempt_number BETWEEN 1 AND 3);
 
 CREATE TABLE IF NOT EXISTS submitted_answers (
     submitted_answer_id INT AUTO_INCREMENT PRIMARY KEY, 
@@ -105,4 +109,3 @@ CREATE TABLE IF NOT EXISTS submitted_answers (
     FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE, 
     UNIQUE KEY unique_attempt_question (attempt_id, question_id) -- prevents answering the same question twice in 1 attempt 
 ); 
-
