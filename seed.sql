@@ -1,3 +1,7 @@
+-- Reset-only seed data.
+-- Run this after a clean database reset via reset_db.sql.
+-- This file is intentionally not idempotent because course_code is unique.
+
 INSERT INTO courses 
 (course_code, course_name)
 VALUES

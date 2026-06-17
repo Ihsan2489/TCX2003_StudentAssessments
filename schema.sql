@@ -84,12 +84,13 @@ CREATE TABLE IF NOT EXISTS attempts (
     attempt_number INT NOT NULL DEFAULT 1, -- To track multiple attempts for the same task
     started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
     submitted_at DATETIME DEFAULT NULL, -- For this NULL it means the attempt is still in progress 
-    raw_score INT DEFAULT NULL, -- Score before applying any late penalties or adjustments
-    final_score INT DEFAULT NULL, -- Score after applying late penalties or adjustments
+    raw_score DECIMAL(5,2) DEFAULT NULL, -- Score before applying any late penalties or adjustments
+    final_score DECIMAL(5,2) DEFAULT NULL, -- Score after applying late penalties or adjustments
     late_penalty_applied BOOLEAN DEFAULT FALSE,
     status ENUM('in_progress', 'submitted', 'graded') NOT NULL DEFAULT 'in_progress',
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE, 
     FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE,
+    CONSTRAINT check_attempt_number CHECK (attempt_number BETWEEN 1 AND 3),
     UNIQUE KEY unique_student_task_attempt (student_id, task_id, attempt_number) -- To prevent duplicate attempt numbers for the same student and task
 ); 
 
@@ -104,5 +105,4 @@ CREATE TABLE IF NOT EXISTS submitted_answers (
     FOREIGN KEY (question_id) REFERENCES questions(question_id) ON DELETE CASCADE, 
     UNIQUE KEY unique_attempt_question (attempt_id, question_id) -- prevents answering the same question twice in 1 attempt 
 ); 
-
 
