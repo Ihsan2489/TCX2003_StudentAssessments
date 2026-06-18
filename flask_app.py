@@ -138,8 +138,73 @@ def assessments():
     username = session.get('username')
     if not username:
         return redirect(url_for('login'))
-    
-    return render_template('assessments.html')
+
+    connection = None
+    cursor = None
+    courses = []
+    message = ''
+
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute('SELECT id FROM students WHERE username = %s', (username,))
+        student = cursor.fetchone()
+
+        if not student:
+            session.clear()
+            return redirect(url_for('login'))
+
+        cursor.execute(
+            '''
+            SELECT
+                c.course_id,
+                c.course_code,
+                c.course_name,
+                a.assessment_id,
+                a.title AS assessment_title,
+                a.description AS assessment_description,
+                a.due_date,
+                t.task_id,
+                t.title AS task_title,
+                t.description AS task_description,
+                t.max_score,
+                q.question_id,
+                q.question_text,
+                q.option_a,
+                q.option_b,
+                q.option_c,
+                q.option_d,
+                COALESCE(attempt_counts.attempt_count, 0) AS attempt_count
+            FROM enrollment e
+            JOIN courses c ON c.course_id = e.course_id
+            JOIN assessments a ON a.course_id = c.course_id
+            JOIN tasks t ON t.assessment_id = a.assessment_id
+            JOIN questions q ON q.task_id = t.task_id
+            LEFT JOIN(
+                SELECT task_id, COUNT(*) AS attempt_count
+                FROM attempts
+                WHERE student_id = %s
+                GROUP BY task_id
+            ) attempt_counts ON attempt_counts.task_id = t.task_id
+            WHERE e.student_id = %s
+            ORDER BY c.course_code, a.assessment_id, t.task_id, q.question_id
+            ''',
+            (student['id'], student['id'])
+        )
+
+        rows = cursor.fetchall()
+        courses = build_assessment_tree(rows)
+
+    except Error as error:
+        message = f'Database error: {error}'
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
+    return render_template('assessments.html', courses=courses, message=message)
 
 
 @app.route('/courses')
@@ -200,7 +265,7 @@ def courses():
             cursor.close()
         if connection and connection.is_connected():
             connection.close()
-            
+
     return render_template('courses.html', courses=courses, message=message)
 
 
@@ -303,7 +368,7 @@ def score():
     username = session.get('username')
     if not username:
         return redirect(url_for('login'))
-    
+
     return render_template('score.html')
 
 
@@ -312,7 +377,7 @@ def leaderboard():
     username = session.get('username')
     if not username:
         return redirect(url_for('login'))
-    
+
     return render_template('leaderboard.html')
 
 
@@ -348,3 +413,55 @@ def profile():
             connection.close()
 
     return render_template('profile.html', user=user)
+
+
+def build_assessment_tree(rows):
+    courses_by_id = {}
+
+    for row in rows:
+        course = courses_by_id.setdefault(row['course_id'], {
+            'course_id': row['course_id'],
+            'course_code': row['course_code'],
+            'course_name': row['course_name'],
+            'assessments': {}
+        })
+
+        assessment = course['assessments'].setdefault(row['assessment_id'], {
+            'assessment_id': row['assessment_id'],
+            'title': row['assessment_title'],
+            'description': row['assessment_description'],
+            'due_date': row['due_date'],
+            'due_date_display': row['due_date'].strftime('%d %b %Y, %H:%M') if row['due_date'] else 'No due date',
+            'tasks': {}
+        })
+
+        attempt_count = row['attempt_count']
+        task = assessment['tasks'].setdefault(row['task_id'], {
+            'task_id': row['task_id'],
+            'title': row['task_title'],
+            'description': row['task_description'],
+            'max_score': row['max_score'],
+            'attempt_count': attempt_count,
+            'next_attempt_number': min(attempt_count + 1, 3),
+            'is_locked': attempt_count >= 3,
+            'questions': []
+        })
+
+        task['questions'].append({
+            'question_id': row['question_id'],
+            'question_text': row['question_text'],
+            'option_a': row['option_a'],
+            'option_b': row['option_b'],
+            'option_c': row['option_c'],
+            'option_d': row['option_d']
+        })
+
+    # turn all to list
+    courses = list(courses_by_id.values())
+
+    for course in courses:
+        course['assessments'] = list(course['assessments'].values())
+        for assessment in course['assessments']:
+            assessment['tasks'] = list(assessment['tasks'].values())
+
+    return courses
