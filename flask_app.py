@@ -13,7 +13,7 @@ db_config = {
     'host': '127.0.0.1',
     'port': 3306,
     'user': 'root',
-    'password': '',
+    'password': '', #replace this with your local MYSQL root pw if you received a database error 
     'database': 'TCX2003_Project'
 }
 
@@ -51,6 +51,7 @@ def login():
             cursor.execute('SELECT * FROM students WHERE username = %s', (username,))
             user = cursor.fetchone()
             if user and check_password_hash(user['password_hash'], password):
+                session['user_id'] = user['id'] 
                 session['username'] = user['username']
                 session['full_name'] = user.get('full_name') or user['username']
                 session['email'] = user.get('email', '')
@@ -101,7 +102,10 @@ def register():
                 cursor.execute('SELECT username FROM students WHERE username = %s OR email = %s', (username, email))
                 existing_user = cursor.fetchone()
                 if existing_user:
-                    message = 'Username or email already exists. Please choose a different one.'
+                    if existing_user['username'].lower() == username.lower():
+                        message = 'Username already exists. Please choose a different one.'
+                    else:
+                        message = 'Email address already registered. Please use a different one'
                 else:
                     # Hash the password and store the new user in the database
                     hashed_password = generate_password_hash(password)
@@ -135,12 +139,53 @@ def home():
 
 @app.route('/assessments')
 def assessments():
+<<<<<<< Updated upstream
+=======
+    username = session.get('username')
+    if not username:
+        return redirect(url_for('login'))
+>>>>>>> Stashed changes
     return render_template('assessments.html')
 
 
 @app.route('/courses')
 def courses():
+<<<<<<< Updated upstream
     return render_template('courses.html')
+=======
+    username = session.get('username')
+    if not username:
+        return redirect(url_for('login'))
+
+    courses = []
+    connection = None
+    cursor = None
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute('SELECT course_id, course_code, course_name FROM courses ORDER BY course_id')
+        db_courses = cursor.fetchall()
+        courses = [
+            {
+                'id': course['course_id'],
+                'courseCode': course['course_code'],
+                'name': course['course_name'],
+                'assessments': 2,
+                'tasksPerAssessment': 2,
+                'average': 0
+            }
+            for course in db_courses
+        ]
+    except Error:
+        pass
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+            
+    return render_template('courses.html', courses=courses)
+>>>>>>> Stashed changes
 
 
 @app.route('/score')
