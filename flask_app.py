@@ -381,38 +381,78 @@ def leaderboard():
     return render_template('leaderboard.html')
 
 
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 def profile():
     username = session.get('username')
     if not username:
         return redirect(url_for('login'))
 
-    user = {
-        'username': username,
-        'full_name': session.get('full_name', username),
-        'email': session.get('email', '')
-    }
+    message = ''
+    message_type = ''
 
     connection = None
     cursor = None
+    
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        cursor.execute('SELECT username, full_name, email FROM students WHERE username = %s', (username,))
-        db_user = cursor.fetchone()
-        if db_user:
-            user = db_user
-            session['full_name'] = db_user.get('full_name') or username
-            session['email'] = db_user.get('email', '')
-    except Error:
-        pass
+        
+        cursor.execute('SELECT username, full_name, email, password_hash FROM students WHERE username = %s', (username,))
+        user = cursor.fetchone()
+        
+        if not user:
+            session.clear()
+            return redirect(url_for('login'))
+        
+        profile_user = {
+            'username': user['username'],
+            'full_name': user['full_name'],
+            'email': user['email']
+        }
+        
+        if request.method == 'POST':
+            current_password = request.form.get('current_password', '')
+            new_password = request.form.get('new_password', '')
+            confirm_password = request.form.get('confirm_password', '')
+            
+            if not current_password or not new_password or not confirm_password:
+                message = 'Please fill out all password fields.'
+                message_type = 'error'
+            elif not check_password_hash(user['password_hash'], current_password):
+                message = 'Current password is incorrect.'
+                message_type = 'error'
+            elif new_password != confirm_password:
+                message = 'New passwords do not match.'
+                message_type = 'error'
+            elif new_password == current_password:
+                message = 'New password must be different from current password.'
+                message_type = 'error'
+            else:
+                new_password_hash = generate_password_hash(new_password)
+                
+                cursor.execute(
+                    'UPDATE students SET password_hash = %s WHERE username = %s',
+                    (new_password_hash, username)
+                )
+                connection.commit()
+                
+                message = 'Password updated successfully.'
+                message_type = 'success'
+    except Error as error:
+        message = f'Database error: {error}'
+        message_type = 'error'
+        profile_user = {
+            'username': username,
+            'full_name': session.get('full_name', username),
+            'email': session.get('email', '')
+        }
     finally:
         if cursor:
             cursor.close()
         if connection and connection.is_connected():
             connection.close()
 
-    return render_template('profile.html', user=user)
+    return render_template('profile.html', user=profile_user, message=message, message_type=message_type)
 
 
 def build_assessment_tree(rows):

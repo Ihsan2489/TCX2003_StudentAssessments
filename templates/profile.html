@@ -30,7 +30,10 @@
             </dl>
         </section>
 
-        <form class="form-card auth-card" action="{{ url_for('profile') }}" method="get">
+        <form class="form-card auth-card" action="{{ url_for('profile') }}" method="post">
+            {% if message %}
+            <p class="form-message">{{ message }}</p>
+            {% endif %}
             <div class="panel-heading">
                 <h2>Change password</h2>
             </div>
