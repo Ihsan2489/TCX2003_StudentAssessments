@@ -524,6 +524,181 @@ These are redundant from a strict normalization perspective, but acceptable here
 because they preserve grading history and make the demo easier to explain.
 
 
+Seeded tester accounts and demo data
+------------------------------------
+
+The seed data includes five tester accounts for demo and testing.
+
+All tester accounts use the same password:
+
+- Tester123!
+
+Important:
+The password is stored in the database as a Werkzeug password hash. The plaintext
+password is listed here only so the team can log in during the demo.
+
+
+1. adam01
+---------
+
+Login:
+
+- username: adam01
+- password: Tester123!
+- full_name: Adam tester
+- email: adam01@gmail.com
+
+Enrolled courses:
+
+- CS101
+- CS102
+- CS201
+
+Seeded attempts:
+
+- CS102 / Relational Model
+  - Attempt 1: raw_score = 2.00, final_score = 2.00
+  - Attempt 2: raw_score = 5.00, final_score = 5.00
+
+- CS101 / Variables and Data Types
+  - Attempt 1: raw_score = 5.00, final_score = 5.00
+
+Demo use:
+
+- Shows a student enrolled in all 3 courses.
+- Shows resubmission improvement from partial marks to full marks.
+- Useful for demonstrating that personal scores show multiple attempts.
+- Useful for leaderboard testing because Adam has a best full-mark attempt.
+
+
+2. sarah02
+----------
+
+Login:
+
+- username: sarah02
+- password: Tester123!
+- full_name: Sarah tester
+- email: sarah02@gmail.com
+
+Enrolled courses:
+
+- CS101
+- CS102
+
+Seeded attempts:
+
+- CS101 / Variables and Data Types
+  - Attempt 1: raw_score = 5.00, final_score = 5.00
+
+- CS102 / SQL Basics
+  - Attempt 1: raw_score = 4.00, final_score = 4.00
+
+Demo use:
+
+- Shows a student with both full-mark and partial-mark attempts.
+- Useful for personal score page testing.
+- Useful for leaderboard comparison against Adam and Danial.
+
+
+3. danial03
+-----------
+
+Login:
+
+- username: danial03
+- password: Tester123!
+- full_name: Danial tester
+- email: danial03@gmail.com
+
+Enrolled courses:
+
+- CS102
+
+Seeded attempts:
+
+- CS102 / SQL Basics
+  - Attempt 1: raw_score = 5.00
+  - final_score = 4.50
+  - late_penalty_applied = TRUE
+
+Demo use:
+
+- Shows the late penalty scenario.
+- Useful for explaining raw_score versus final_score.
+- Useful for verifying that the score page displays late penalties correctly.
+
+
+4. hannah04
+-----------
+
+Login:
+
+- username: hannah04
+- password: Tester123!
+- full_name: Hannah tester
+- email: hannah04@gmail.com
+
+Enrolled courses:
+
+- CS201
+
+Seeded attempts:
+
+- CS201 / Logic and Sets
+  - Attempt 1: raw_score = 3.00, final_score = 3.00
+
+Demo use:
+
+- Shows a partial attempt where the student can still retry.
+- Useful for verifying that assessments and scores are filtered by enrolled
+  courses.
+
+
+5. rayan05
+----------
+
+Login:
+
+- username: rayan05
+- password: Tester123!
+- full_name: Rayan tester
+- email: rayan05@gmail.com
+
+Enrolled courses:
+
+- CS101
+
+Seeded attempts:
+
+- CS101 / Conditionals
+  - Attempt 1: raw_score = 2.00, final_score = 2.00
+  - Attempt 2: raw_score = 3.00, final_score = 3.00
+  - Attempt 3: raw_score = 4.00, final_score = 4.00
+
+Demo use:
+
+- Shows the 3-attempt limit.
+- Useful for verifying that the assessment page disables or blocks another
+  submission after 3 attempts.
+- Useful for explaining why attempt_number is part of the attempts table.
+
+
+Seeded demo data counts
+-----------------------
+
+After a clean reset with reset_db.sql, the demo database should contain:
+
+- 3 courses
+- 5 assessments
+- 8 tasks
+- 40 questions
+- 5 tester students
+- 8 enrollment rows
+- 10 graded attempt rows
+- 50 submitted answer rows
+
+
 Project and demo flows
 ----------------------
 
@@ -592,11 +767,9 @@ Flow 6: View assessments
 7. Selected task displays due date, attempt number, max score, and all 5 MCQs.
 
 
-Flow 7: Submit MCQ attempt - planned
+Flow 7: Submit MCQ attempt
 
-This is the next major missing feature.
-
-Expected backend flow:
+Backend flow:
 
 1. Student selects answers for the 5 questions.
 2. Student submits task attempt.
@@ -612,12 +785,12 @@ Expected backend flow:
 12. Flask updates attempts with score, late flag, and status='graded'.
 
 
-Flow 8: View personal scores - planned
+Flow 8: View personal scores
 
-Expected page:
+Current page:
 
 1. Student opens /score.
-2. Flask loads all attempts for that student.
+2. Flask loads graded attempts for that student from currently enrolled courses.
 3. Page shows course, assessment, task, attempt number, raw_score, final_score,
    late penalty status, and submitted_at.
 
@@ -829,8 +1002,7 @@ Expected future behavior:
 7. assessments()
 
 Status:
-Implemented for display.
-Submission is not implemented yet.
+Implemented for display and task submission.
 
 Route:
 /assessments
@@ -866,9 +1038,7 @@ Prepares the UI for demo steps 3, 4, and 8.
 
 Expected future behavior:
 
-- Enable answer selection.
-- Submit selected answers to a POST route.
-- Disable submission after 3 attempts.
+- Improve visual feedback after submission if needed.
 
 
 8. courses()
@@ -965,7 +1135,7 @@ Keeping old attempts is safer for audit/history.
 11. score()
 
 Status:
-Route exists, but page is not yet database-backed.
+Implemented and database-backed.
 
 Route:
 /score
@@ -977,20 +1147,19 @@ Purpose:
 Shows personal scores.
 
 Current database tables used:
-None in current implementation.
-
-Expected database tables:
 
 - students
 - courses
 - assessments
 - tasks
 - attempts
+- enrollment
+- submitted_answers
 
-Expected behavior:
+Current behavior:
 
 - Requires login.
-- Loads all attempts for the logged-in student.
+- Loads graded attempts for the logged-in student from currently enrolled courses.
 - Shows course, assessment, task, attempt_number, submitted_at, raw_score,
   final_score, late_penalty_applied, and status.
 - Should show every attempt, not only the best attempt.
@@ -1454,25 +1623,28 @@ Prevents demo failure caused by bad seed data.
 26. create_demo_users()
 
 Status:
-Planned seed/setup function or SQL seed section.
+Implemented in seed.sql and reset_db.sql as SQL seed data.
 
 Purpose:
 Create predictable demo users.
 
-Expected demo users:
+Demo users:
 
-- demo_full
-- demo_partial
-- demo_late
+- adam01
+- sarah02
+- danial03
+- hannah04
+- rayan05
 
-Expected behavior:
+Implemented behavior:
 
 - Insert users with hashed passwords.
 - Enroll users into courses.
-- Optionally create sample attempts for score and leaderboard demo.
+- Create sample attempts for score and leaderboard demo.
+- Create submitted_answers rows so each seeded attempt has 5 answer records.
 
 Note:
-This may be better done in seed.sql than in Flask.
+This is intentionally done in SQL seed files instead of Flask application code.
 
 
 Demo checklist
@@ -1488,6 +1660,10 @@ Preparation checklist:
   SELECT COUNT(*) FROM assessments;
   SELECT COUNT(*) FROM tasks;
   SELECT COUNT(*) FROM questions;
+  SELECT COUNT(*) FROM students;
+  SELECT COUNT(*) FROM enrollment;
+  SELECT COUNT(*) FROM attempts;
+  SELECT COUNT(*) FROM submitted_answers;
 
 - Confirm every task has exactly 5 questions:
   SELECT t.task_id, t.title, COUNT(q.question_id) AS question_count
@@ -1512,7 +1688,7 @@ Demo step checklist:
 - Expected: redirect to /home.
 
 Status:
-Implemented, but seed data must include demo users or user must register first.
+Implemented. Seed data includes demo users.
 
 
 2. Change password
@@ -1557,7 +1733,7 @@ Implemented for display.
 - Expected: raw_score = 5, final_score = 5.
 
 Status:
-Planned. Submission and grading route still needed.
+Implemented.
 
 
 6. Submit partial-mark MCQ attempt
@@ -1568,7 +1744,7 @@ Planned. Submission and grading route still needed.
 - Expected: partial raw_score and final_score.
 
 Status:
-Planned.
+Implemented.
 
 
 7. Show all marks
@@ -1577,7 +1753,7 @@ Planned.
 - Expected: all attempts are shown.
 
 Status:
-Planned. Current score page is not fully database-backed.
+Implemented and database-backed for currently enrolled courses.
 
 
 8. Show leaderboard
@@ -1596,7 +1772,8 @@ Planned. Current leaderboard page is not fully database-backed.
 - Expected: new attempt row appears, best score improves.
 
 Status:
-Planned.
+Implemented for task attempts. Leaderboard best-attempt display still needs
+database integration.
 
 
 10. Late penalty
@@ -1621,57 +1798,32 @@ Planned.
 High-priority remaining work
 ----------------------------
 
-1. Add demo users and enrollments to seed.sql.
+1. Finish leaderboard database integration.
 
-Why:
-A full-mark demo should start from a reset database and work immediately.
+Required behavior:
 
-
-2. Implement task attempt submission.
-
-Required backend behavior:
-
-- block if attempt_count >= 3
-- insert attempts row
-- insert five submitted_answers rows
-- compare chosen_option with correct_option
-- calculate raw_score
-- apply late penalty
-- update final_score and status
+- use each student's best attempt per task
+- aggregate task scores per assessment
+- rank students by assessment
 
 
-3. Make /score database-backed.
+2. Add late-score recalculation support.
 
-Required display:
+Required behavior:
 
-- all attempts for logged-in student
-- course
-- assessment
-- task
-- attempt_number
-- raw_score
-- final_score
-- late_penalty_applied
-- submitted_at
+- after due_date is changed in MySQL, recompute final_score if needed
+- set late_penalty_applied correctly
+- keep raw_score unchanged
 
 
-4. Make /leaderboard database-backed.
-
-Required rule:
-
-- use best attempt per student per task
-- aggregate by assessment
-- show top 5
-
-
-5. Add CSV export.
+3. Add CSV score export.
 
 Required output:
 
 - student
-- course
-- assessment
-- task
+- course_code
+- assessment_title
+- task_title
 - attempt_number
 - raw_score
 - final_score
@@ -1679,7 +1831,7 @@ Required output:
 - submitted_at
 
 
-6. Prepare final demo runbook.
+4. Prepare final demo runbook.
 
 Purpose:
 Make the 10-minute demo predictable and easy to execute.
