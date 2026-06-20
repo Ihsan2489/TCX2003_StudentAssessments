@@ -473,12 +473,16 @@ input:disabled {
 }
 
 .score-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     margin-bottom: 24px;
 }
 
 .score-card {
     padding: 20px;
+}
+
+.score-card-wide {
+    grid-column: span 2;
 }
 
 .score-header {
@@ -715,5 +719,9 @@ input:disabled {
     .score-table {
         display: block;
         overflow-x: auto;
+    }
+
+    .score-card-wide {
+        grid-column: auto;
     }
 }
