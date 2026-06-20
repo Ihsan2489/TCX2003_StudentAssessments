@@ -143,7 +143,7 @@ This prevents duplicate enrollment for the same student and course.
 -----------
 
 Purpose:
-Stores login session records if session-token tracking is implemented.
+Stores login session records for audit tracking.
 
 Columns:
 
@@ -183,8 +183,10 @@ Columns:
   - Nullable
 
 Current implementation note:
-The current Flask app uses Flask's session object. The sessions table exists in
-the schema but is not fully used yet.
+The app still uses Flask's session object for normal browser login state. On
+successful login, it also inserts one row into sessions with a secure
+session_token, expiry time, IP address, and user agent. On logout, it updates
+sessions.logged_out_at.
 
 
 5. assessments
@@ -784,15 +786,17 @@ Flow 2: Login
 2. Student enters username and password.
 3. Flask fetches matching student by username.
 4. Flask checks submitted password against students.password_hash.
-5. If valid, Flask stores username, full_name, and email in session.
-6. Student is redirected to /home.
+5. If valid, Flask inserts a row into sessions for audit tracking.
+6. Flask stores username, full_name, email, and db_session_token in session.
+7. Student is redirected to /home.
 
 
 Flow 3: Logout
 
 1. Student clicks logout.
-2. Flask clears the session.
-3. Student is redirected to /login.
+2. Flask updates sessions.logged_out_at for the current db_session_token.
+3. Flask clears the session.
+4. Student is redirected to /login.
 
 
 Flow 4: Add course
@@ -976,13 +980,16 @@ Authenticates student using username and password.
 Database tables used:
 
 - students
+- sessions
 
 Important behavior:
 
 - Validates that username and password are provided.
 - Fetches the student row by username.
 - Uses check_password_hash against students.password_hash.
-- Stores username, full_name, and email in Flask session.
+- Inserts a sessions row with session_token, expires_at, ip_address, and
+  user_agent.
+- Stores username, full_name, email, and db_session_token in Flask session.
 - Redirects successful login to /home.
 
 Demo relevance:
@@ -1004,15 +1011,14 @@ Purpose:
 Logs the student out.
 
 Database tables used:
-None in current implementation.
+
+- sessions
 
 Important behavior:
 
+- Updates sessions.logged_out_at for the active db_session_token.
 - Clears Flask session.
 - Redirects to /login.
-
-Possible future improvement:
-If sessions table is fully used, this should also update sessions.logged_out_at.
 
 
 5. register()

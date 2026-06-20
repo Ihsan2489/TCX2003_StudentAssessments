@@ -3,6 +3,7 @@ import mysql.connector
 from mysql.connector import Error
 from werkzeug.security import generate_password_hash, check_password_hash
 from decimal import Decimal, ROUND_HALF_UP
+import secrets
 import csv
 import io
 # import re
@@ -23,6 +24,58 @@ db_config = {
 
 def get_db_connection():
     return mysql.connector.connect(**db_config)
+
+
+def create_db_session(cursor, student_id):
+    session_token = secrets.token_urlsafe(32)
+    cursor.execute(
+        '''
+        INSERT INTO sessions (
+            student_id,
+            session_token,
+            expires_at,
+            ip_address,
+            user_agent
+        )
+        VALUES (%s, %s, DATE_ADD(NOW(), INTERVAL 8 HOUR), %s, %s)
+        ''',
+        (
+            student_id,
+            session_token,
+            request.remote_addr,
+            request.user_agent.string
+        )
+    )
+    return session_token
+
+
+def close_db_session(session_token):
+    if not session_token:
+        return
+
+    connection = None
+    cursor = None
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            '''
+            UPDATE sessions
+            SET logged_out_at = NOW()
+            WHERE session_token = %s
+            AND logged_out_at IS NULL
+            ''',
+            (session_token,)
+        )
+        connection.commit()
+    except Error:
+        if connection:
+            connection.rollback()
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
 
 
 @app.route('/')
@@ -54,9 +107,13 @@ def login():
             cursor.execute('SELECT * FROM students WHERE username = %s', (username,))
             user = cursor.fetchone()
             if user and check_password_hash(user['password_hash'], password):
+                db_session_token = create_db_session(cursor, user['id'])
+                connection.commit()
+                session.clear()
                 session['username'] = user['username']
                 session['full_name'] = user.get('full_name') or user['username']
                 session['email'] = user.get('email', '')
+                session['db_session_token'] = db_session_token
                 return redirect(url_for('home'))
             else:
                 message = 'Invalid username or password.'
@@ -74,6 +131,8 @@ def login():
 
 @app.route('/logout')
 def logout():
+    db_session_token = session.get('db_session_token')
+    close_db_session(db_session_token)
     session.clear()
     return redirect(url_for('login'))
 
