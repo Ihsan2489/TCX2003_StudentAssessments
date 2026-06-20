@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, request, session, url_for
 import mysql.connector
 from mysql.connector import Error
 from werkzeug.security import generate_password_hash, check_password_hash
+from decimal import Decimal, ROUND_HALF_UP
 # import re
 
 app = Flask(__name__)
@@ -142,7 +143,9 @@ def assessments():
     connection = None
     cursor = None
     courses = []
-    message = ''
+    message = session.pop('assessment_message', '')
+    attempt_result = session.pop('attempt_result', None)
+    selected_task_id = attempt_result['task_id'] if attempt_result else None
 
     try:
         connection = get_db_connection()
@@ -204,7 +207,206 @@ def assessments():
         if connection and connection.is_connected():
             connection.close()
 
-    return render_template('assessments.html', courses=courses, message=message)
+    return render_template(
+        'assessments.html',
+        courses=courses,
+        message=message,
+        attempt_result=attempt_result,
+        selected_task_id=selected_task_id
+    )
+
+
+@app.route('/tasks/<int:task_id>/attempts', methods=['POST'])
+def submit_attempt(task_id):
+    username = session.get('username')
+    if not username:
+        return redirect(url_for('login'))
+
+    connection = None
+    cursor = None
+
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+        connection.start_transaction()
+
+        cursor.execute(
+            'SELECT id FROM students WHERE username = %s',
+            (username,)
+        )
+        student = cursor.fetchone()
+
+        if not student:
+            session.clear()
+            return redirect(url_for('login'))
+
+        student_id = student['id']
+
+        # get task details, with assessment, course, enrollment
+        cursor.execute(
+            '''
+            SELECT
+                t.task_id,
+                t.title AS task_title,
+                t.max_score,
+                a.assessment_id,
+                a.due_date
+            FROM tasks t
+            JOIN assessments a ON a.assessment_id = t.assessment_id
+            JOIN courses c ON c.course_id = a.course_id
+            JOIN enrollment e ON e.course_id = c.course_id
+            WHERE t.task_id = %s
+            AND e.student_id = %s
+            ''',
+            (task_id, student_id)
+        )
+        task = cursor.fetchone()
+
+        if not task:
+            connection.rollback()
+            session['assessment_message'] = 'Task not found or not available for your enrolled courses'
+            return redirect(url_for('assessments'))
+
+        # get number of attempts
+        cursor.execute(
+            '''
+            SELECT COUNT(*) AS attempt_count
+            FROM attempts
+            WHERE student_id = %s
+            AND task_id = %s
+            ''',
+            (student_id, task_id)
+        )
+        attempt_count = cursor.fetchone()['attempt_count']
+
+        if attempt_count >= 3:
+            connection.rollback()
+            session['assessment_message'] = 'Attempt limit reached for this task.'
+            return redirect(url_for('assessments'))
+
+        attempt_number = attempt_count + 1
+
+        # get questions details
+        cursor.execute(
+            '''
+            SELECT question_id, correct_option, points
+            FROM questions
+            WHERE task_id = %s
+            ORDER BY question_id
+            ''',
+            (task_id,)
+        )
+        questions = cursor.fetchall()
+
+        if len(questions) != 5:
+            connection.rollback()
+            session['assessment_message'] = 'This task is not configured with exactly 5 questions.'
+            return redirect(url_for('assessments'))
+
+        # get the submitted answers
+        submitted_answers = {}
+        for question in questions:
+            question_id = question['question_id']
+            field_name = f'question_{question_id}'
+            chosen_option = request.form.get(field_name)
+
+            if chosen_option not in ('A', 'B', 'C', 'D'):
+                connection.rollback()
+                session['assessment_message'] = 'Please answer all 5 questions.'
+                return redirect(url_for('assessments'))
+
+            submitted_answers[question_id] = chosen_option
+
+        cursor.execute(
+            '''
+            INSERT INTO attempts (
+                student_id,
+                task_id,
+                attempt_number,
+                submitted_at,
+                status
+            )
+            VALUES (%s, %s, %s, NOW(), 'submitted')
+            ''',
+            (student_id, task_id, attempt_number)
+        )
+
+        attempt_id = cursor.lastrowid
+        raw_score = Decimal('0.00')
+
+        for question in questions:
+            question_id = question['question_id']
+            chosen_option = submitted_answers[question_id]
+            is_correct = chosen_option == question['correct_option']
+            points_awarded = question['points'] if is_correct else 0
+            raw_score += Decimal(str(points_awarded))
+
+            cursor.execute(
+                '''
+                INSERT INTO submitted_answers(
+                    attempt_id,
+                    question_id,
+                    chosen_option,
+                    is_correct,
+                    points_awarded
+                )
+                VALUES(%s, %s, %s, %s, %s)
+                ''',
+                (attempt_id, question_id, chosen_option, is_correct, points_awarded)
+            )
+
+        cursor.execute(
+            'SELECT submitted_at FROM attempts WHERE attempt_id = %s',
+            (attempt_id,)
+        )
+        submitted_at = cursor.fetchone()['submitted_at']
+        late_penalty_applied = bool(task['due_date'] and submitted_at and submitted_at > task['due_date'])
+        final_score = raw_score
+
+        if late_penalty_applied:
+            final_score = raw_score * Decimal('0.90')
+
+        final_score = final_score.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        raw_score = raw_score.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+        cursor.execute(
+            '''
+            UPDATE attempts
+            SET raw_score = %s,
+                final_score = %s,
+                late_penalty_applied = %s,
+                status = 'graded'
+            WHERE attempt_id = %s
+            ''',
+            (raw_score, final_score, late_penalty_applied, attempt_id)
+        )
+
+        connection.commit()
+
+        session['assessment_message'] = (
+            f'Attempt {attempt_number} submitted for {task["task_title"]}. '
+            f'Score: {final_score}'
+        )
+        session['attempt_result'] = {
+            'task_id': task_id,
+            'task_title': task['task_title'],
+            'attempt_number': attempt_number,
+            'raw_score': str(raw_score),
+            'final_score': str(final_score),
+            'late_penalty_applied': late_penalty_applied
+        }
+
+    except Error as error:
+        if connection:
+            connection.rollback()
+        session['assessment_message'] = f'Database error: {error}'
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
+    return redirect(url_for('assessments'))
 
 
 @app.route('/courses')

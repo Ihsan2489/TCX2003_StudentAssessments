@@ -17,9 +17,26 @@
     <p class="form-message">{{ message }}</p>
     {% endif %}
 
+    {% if attempt_result %}
+    <article class="task-summary">
+        <div>
+            <h2>{{ attempt_result.task_title }} · Attempt {{ attempt_result.attempt_number }}</h2>
+            <p>
+                Raw score {{ attempt_result.raw_score }} · Final score {{ attempt_result.final_score }}
+                {% if attempt_result.late_penalty_applied %}
+                · Late penalty applied
+                {% endif %}
+            </p>
+        </div>
+        <span class="status-badge {{ 'late' if attempt_result.late_penalty_applied else 'full' }}">
+            Graded
+        </span>
+    </article>
+    {% endif %}
+
     {% if courses %}
     <div class="content-grid">
-        <section class="form-card submit-form">
+        <form class="form-card submit-form" id="attempt-form" method="post">
             <div class="form-grid">
                 <div class="input-group">
                     <label for="course-select">Course</label>
@@ -43,7 +60,11 @@
             </div>
 
             <div class="choice-question-list" id="selected-task-detail"></div>
-        </section>
+
+            <button class="primary-button" id="submit-attempt-button" type="submit">
+                Submit attempt
+            </button>
+        </form>
 
         <aside class="panel">
             <h2>Assessment rules</h2>
@@ -77,6 +98,9 @@
         const taskSelect = document.getElementById("task-select");
         const attemptInput = document.getElementById("attempt");
         const selectedTaskDetail = document.getElementById("selected-task-detail");
+        const attemptForm = document.getElementById("attempt-form");
+        const submitAttemptButton = document.getElementById("submit-attempt-button");
+        const selectedTaskId = {{ selected_task_id | tojson }};
 
         function selectedCourse() {
             return assessmentData.find((course) => course.course_id === Number(courseSelect.value));
@@ -135,7 +159,10 @@
                 ? "Attempt limit reached"
                 : `Attempt ${task.next_attempt_number} of 3`;
 
+            attemptForm.action = `/tasks/${task.task_id}/attempts`;
             attemptInput.value = `${attemptText} - ${task.attempt_count} attempts used`;
+            submitAttemptButton.disabled = task.is_locked;
+            submitAttemptButton.textContent = task.is_locked ? "Attempt limit reached" : "Submit attempt";
             selectedTaskDetail.innerHTML = "";
 
             const summary = document.createElement("article");
@@ -158,19 +185,19 @@
                     <p>${question.question_text}</p>
                     <div class="choice-option-list">
                         <label class="choice-option">
-                            <input type="radio" name="question-${question.question_id}" value="A" disabled>
+                            <input type="radio" name="question_${question.question_id}" value="A" ${task.is_locked ? "disabled" : "required"}>
                             <span>A. ${question.option_a}</span>
                         </label>
                         <label class="choice-option">
-                            <input type="radio" name="question-${question.question_id}" value="B" disabled>
+                            <input type="radio" name="question_${question.question_id}" value="B" ${task.is_locked ? "disabled" : "required"}>
                             <span>B. ${question.option_b}</span>
                         </label>
                         <label class="choice-option">
-                            <input type="radio" name="question-${question.question_id}" value="C" disabled>
+                            <input type="radio" name="question_${question.question_id}" value="C" ${task.is_locked ? "disabled" : "required"}>
                             <span>C. ${question.option_c}</span>
                         </label>
                         <label class="choice-option">
-                            <input type="radio" name="question-${question.question_id}" value="D" disabled>
+                            <input type="radio" name="question_${question.question_id}" value="D" ${task.is_locked ? "disabled" : "required"}>
                             <span>D. ${question.option_d}</span>
                         </label>
                     </div>
@@ -179,10 +206,32 @@
             });
         }
 
+        function selectSubmittedTaskIfPresent() {
+            if (!selectedTaskId) {
+                return;
+            }
+
+            for (const course of assessmentData) {
+                for (const assessment of course.assessments) {
+                    const matchedTask = assessment.tasks.find((task) => task.task_id === selectedTaskId);
+                    if (matchedTask) {
+                        courseSelect.value = course.course_id;
+                        renderAssessments();
+                        assessmentSelect.value = assessment.assessment_id;
+                        renderTasks();
+                        taskSelect.value = matchedTask.task_id;
+                        renderSelectedTask();
+                        return;
+                    }
+                }
+            }
+        }
+
         courseSelect.addEventListener("change", renderAssessments);
         assessmentSelect.addEventListener("change", renderTasks);
         taskSelect.addEventListener("change", renderSelectedTask);
         renderCourses();
+        selectSubmittedTaskIfPresent();
     </script>
     {% else %}
     <section class="panel">
