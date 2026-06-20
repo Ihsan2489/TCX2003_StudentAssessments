@@ -354,6 +354,7 @@ Columns:
   - NOT NULL
   - Defaults to 1
   - Must be assigned by backend logic as 1, 2, or 3
+  - Database CHECK constraint enforces attempt_number BETWEEN 1 AND 3
 
 - started_at
   - DATETIME
@@ -389,6 +390,10 @@ Unique key:
 - (student_id, task_id, attempt_number)
 
 This prevents duplicate attempt numbers for the same student and task.
+
+Check constraint:
+
+- check_attempt_number ensures attempt_number is between 1 and 3.
 
 Backend must still block attempt_number greater than 3.
 

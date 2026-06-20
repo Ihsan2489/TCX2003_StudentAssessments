@@ -90,15 +90,11 @@ CREATE TABLE IF NOT EXISTS attempts (
     final_score DECIMAL(5,2) DEFAULT NULL, -- Score after applying late penalties or adjustments
     late_penalty_applied BOOLEAN DEFAULT FALSE,
     status ENUM('in_progress', 'submitted', 'graded') NOT NULL DEFAULT 'in_progress',
+    CONSTRAINT check_attempt_number CHECK (attempt_number BETWEEN 1 AND 3),
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE, 
     FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE,
     UNIQUE KEY unique_student_task_attempt (student_id, task_id, attempt_number) -- To prevent duplicate attempt numbers for the same student and task
 ); 
-
--- If your MySQL version is 8.0.16 or newer, this optional constraint can also
--- enforce the 3-attempt rule at the database layer:
--- ALTER TABLE attempts
--- ADD CONSTRAINT check_attempt_number CHECK (attempt_number BETWEEN 1 AND 3);
 
 CREATE TABLE IF NOT EXISTS submitted_answers (
     submitted_answer_id INT AUTO_INCREMENT PRIMARY KEY, 
