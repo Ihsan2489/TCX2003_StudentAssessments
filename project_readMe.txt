@@ -1656,11 +1656,15 @@ Expected behavior:
 - Rank students by course_score.
 - Dropdown should list courses.
 - Exclude dropped courses by joining through enrollment.
+- Calculate mean, median, and mode from enrolled students' course percentages.
+- Generate a matplotlib score-range distribution chart for each course.
 - Return top 5.
 
 Important project rule:
 For the MCQ adaptation, leaderboard uses best attempt per task, then sums those
 best task scores at course level.
+Mean, median, mode, and the chart are analytics on the resulting course-level
+percentages, not separate stored columns.
 
 
 24. export_score()
@@ -1875,6 +1879,8 @@ Implemented and database-backed for currently enrolled courses.
 - Expected: top 5 students are ranked by overall course score.
 - Expected: score is based on each student's best attempt per task across all
   assessments in that course.
+- Expected: selected course panel shows mean, median, mode, and a matplotlib
+  chart with score ranges on the x-axis and student counts on the y-axis.
 
 Status:
 Implemented and database-backed.

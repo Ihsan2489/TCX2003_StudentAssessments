@@ -3,10 +3,19 @@ import mysql.connector
 from mysql.connector import Error
 from werkzeug.security import generate_password_hash, check_password_hash
 from decimal import Decimal, ROUND_HALF_UP
+import base64
 import secrets
 import csv
 import io
+import statistics
 # import re
+
+try:
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
 
 app = Flask(__name__)
 app.debug = True
@@ -781,6 +790,7 @@ def export_score():
         if connection and connection.is_connected():
             connection.close()
 
+
 @app.route('/leaderboard')
 def leaderboard():
     username = session.get('username')
@@ -864,13 +874,16 @@ def leaderboard():
                 'total_tasks': row['total_tasks'],
                 'course_score': f'{course_score:.2f}',
                 'course_max_score': f'{course_max_score:.2f}',
-                'percentage': f'{percentage:.2f}'
+                'percentage': f'{percentage:.2f}',
+                'percentage_value': percentage
             })
 
         for course in courses_by_id.values():
+            percentages = [student['percentage_value'] for student in course['leaders']]
+            course['analytics'] = calculate_course_analytics(percentages)
+            course['chart_base64'] = build_course_chart(course)
             course['leaders'] = course['leaders'][:5]
             courses.append(course)
-
 
     except Error as error:
         message = f'Database error: {error}'
@@ -1089,3 +1102,81 @@ def student_submission_table(cursor, student_id):
         })
 
     return submissions
+
+
+def format_percentage(value):
+    return f'{value:.2f}%'
+
+
+def calculate_course_analytics(percentages):
+    if not percentages:
+        return {
+            'mean_percentage': '-',
+            'median_percentage': '-',
+            'mode_percentage': '-'
+        }
+
+    rounded_percentages = [round(value, 2) for value in percentages]
+    modes = statistics.multimode(rounded_percentages)
+
+    if len(modes) == len(set(rounded_percentages)) and len(modes) > 1:
+        mode_percentage = 'No repeat'
+    else:
+        mode_percentage = ', '.join(format_percentage(mode) for mode in sorted(modes))
+
+    return {
+        'mean_percentage': format_percentage(statistics.mean(rounded_percentages)),
+        'median_percentage': format_percentage(statistics.median(rounded_percentages)),
+        'mode_percentage': mode_percentage
+    }
+
+
+def build_course_chart(course):
+    if plt is None or not course['leaders']:
+        return ''
+
+    values = [student['percentage_value'] for student in course['leaders']]
+    score_ranges = [
+        (0, 20, '0-<20'),
+        (20, 40, '20-<40'),
+        (40, 60, '40-<60'),
+        (60, 80, '60-<80'),
+        (80, 100, '80-100')
+    ]
+    range_labels = [score_range[2] for score_range in score_ranges]
+    range_counts = [0 for _ in score_ranges]
+
+    for value in values:
+        for index, (lower_bound, upper_bound, _) in enumerate(score_ranges):
+            is_last_range = index == len(score_ranges) - 1
+            if lower_bound <= value < upper_bound or (is_last_range and value == 100):
+                range_counts[index] += 1
+                break
+
+    figure, axis = plt.subplots(figsize=(7.2, 3.2), dpi=150)
+    bars = axis.bar(range_labels, range_counts, color='#176b87')
+    axis.set_xlabel('Score range (%)')
+    axis.set_ylabel('Number of students')
+    axis.set_title(f'{course["course_code"]} score distribution')
+    axis.grid(axis='y', color='#d9e2e7', linewidth=0.8)
+    axis.set_axisbelow(True)
+    axis.set_ylim(0, max(range_counts) + 1)
+    axis.set_yticks(range(0, max(range_counts) + 2))
+
+    for bar in bars:
+        height = bar.get_height()
+        axis.text(
+            bar.get_x() + bar.get_width() / 2,
+            height + 0.05,
+            str(int(height)),
+            ha='center',
+            va='bottom',
+            fontsize=8
+        )
+
+    buffer = io.BytesIO()
+    figure.tight_layout()
+    figure.savefig(buffer, format='png', bbox_inches='tight')
+    plt.close(figure)
+    buffer.seek(0)
+    return base64.b64encode(buffer.getvalue()).decode('ascii')

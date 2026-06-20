@@ -558,6 +558,48 @@ input:disabled {
     height: 100%;
 }
 
+.leaderboard-analytics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.analytics-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px;
+    background: var(--surface-soft);
+}
+
+.analytics-card span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.analytics-card strong {
+    display: block;
+    margin-top: 6px;
+    color: var(--primary-dark);
+    font-size: 1.25rem;
+}
+
+.leaderboard-chart {
+    margin-bottom: 16px;
+    overflow-x: auto;
+}
+
+.leaderboard-chart img {
+    display: block;
+    width: 100%;
+    min-width: 520px;
+    height: auto;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}
+
 .profile-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 420px;
@@ -730,6 +772,7 @@ input:disabled {
     .form-grid,
     .content-grid,
     .stat-grid,
+    .leaderboard-analytics,
     .score-grid,
     .leaderboard-layout,
     .profile-layout,

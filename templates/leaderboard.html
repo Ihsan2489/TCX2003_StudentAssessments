@@ -35,6 +35,30 @@
         </div>
 
         {% if course.leaders %}
+        <div class="leaderboard-analytics" aria-label="Course score analytics">
+            <article class="analytics-card">
+                <span>Mean</span>
+                <strong>{{ course.analytics.mean_percentage }}</strong>
+            </article>
+            <article class="analytics-card">
+                <span>Median</span>
+                <strong>{{ course.analytics.median_percentage }}</strong>
+            </article>
+            <article class="analytics-card">
+                <span>Mode</span>
+                <strong>{{ course.analytics.mode_percentage }}</strong>
+            </article>
+        </div>
+
+        {% if course.chart_base64 %}
+        <div class="leaderboard-chart">
+            <img
+                src="data:image/png;base64,{{ course.chart_base64 }}"
+                alt="{{ course.course_code }} course score distribution chart"
+            >
+        </div>
+        {% endif %}
+
         <div class="leader-list">
             {% for student in course.leaders %}
             <article class="leader-row">
