@@ -575,7 +575,7 @@ def score():
 
     connection = None
     cursor = None
-    message = ''
+    message = session.pop('score_message', '')
     summary = []
     submissions = []
 
@@ -661,6 +661,7 @@ def score():
         message=message
     )
 
+
 @app.route('/score/export')
 def export_score():
     username = session.get('username')
@@ -669,7 +670,6 @@ def export_score():
 
     connection = None
     cursor = None
-    message = ''
 
     try:
         connection = get_db_connection()
@@ -714,8 +714,8 @@ def export_score():
         )
 
     except Error as error:
-        message = f'Database error: {error}'
-        return render_template('score.html', message=message, submissions=[])
+        session['score_message'] = f'Database error: {error}'
+        return redirect(url_for('score'))
     finally:
         if cursor:
             cursor.close()
@@ -952,6 +952,7 @@ def build_assessment_tree(rows):
             assessment['tasks'] = list(assessment['tasks'].values())
 
     return courses
+
 
 def student_submission_table(cursor, student_id):
     cursor.execute(

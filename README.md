@@ -80,3 +80,18 @@ The final validation query should return zero rows. If it returns rows, those ta
 ```bash
 flask --app flask_app run --debug
 ```
+
+## Batch Score Recalculation
+
+After changing an assessment `due_date` directly in MySQL, recalculate stored
+attempt scores for all students:
+
+```bash
+python3 recalculate_scores.py
+```
+
+To recalculate only one assessment:
+
+```bash
+python3 recalculate_scores.py --assessment-id 1
+```

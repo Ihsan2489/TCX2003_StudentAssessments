@@ -860,7 +860,7 @@ Current page:
    late penalty status, and submitted_at.
 
 
-Flow 9: Leaderboard - planned
+Flow 9: Leaderboard
 
 Project rule for this MCQ adaptation:
 Leaderboard ranks students by overall course score.
@@ -871,7 +871,7 @@ Course score means:
 - sum those best task scores across all assessments in the selected course
 - rank students within that course
 
-Expected query logic:
+Current query logic:
 
 1. For each student and task, take MAX(final_score).
 2. For each student and course, combine best task scores from all assessments
@@ -879,25 +879,29 @@ Expected query logic:
 3. Rank students by course_score.
 4. Show top 5 students per course.
 5. The leaderboard dropdown should list courses, not assessments.
+6. Only currently enrolled students are included because the query starts from
+   enrollment.
 
 
-Flow 10: Late penalty demo - planned
+Flow 10: Late penalty demo
 
 1. Student submits an attempt before due date.
 2. Score is shown without penalty.
 3. Change assessment due_date directly in MySQL to a time before submitted_at.
-4. Recalculate/regrade.
+4. Run python3 recalculate_scores.py.
 5. Score should show 10% penalty.
 
 
-Flow 11: CSV export - planned
+Flow 11: CSV export
 
-Expected export:
+Current export:
 
-1. Run backend export script or route.
-2. Export all student scores to CSV.
-3. CSV should include student, course, assessment, task, attempt_number,
-   raw_score, final_score, late_penalty_applied, and submitted_at.
+1. Open /score.
+2. Click the export icon.
+3. Confirm Export CSV.
+4. The route downloads the logged-in student's visible score records.
+5. CSV includes course, assessment, task, question count, attempt number,
+   submitted time, raw_score, penalty, final_score, and status.
 
 
 Current and planned Flask functions
@@ -1487,13 +1491,13 @@ Demo relevance:
 Supports demo steps 3, 4, 5, and 8.
 
 
-19. grade_attempt(attempt_id)
+19. recalculate_attempt_score(attempt_id)
 
 Status:
-Planned helper or backend script function.
+Implemented helper in recalculate_scores.py.
 
 Purpose:
-Grade one attempt based on submitted answers.
+Recalculate one attempt based on stored submitted answers.
 
 Expected database tables:
 
@@ -1514,8 +1518,9 @@ Expected behavior:
 - Update attempts row.
 
 Design choice:
-This can be called immediately by submit_attempt().
-It can also be reused by a regrade script for the late penalty demo.
+submit_attempt() still grades immediately in one transaction for simplicity.
+recalculate_attempt_score() exists in recalculate_scores.py for the
+due-date-change demo and recomputes from the normalized answer records.
 
 
 20. grade_ungraded_attempts()
@@ -1543,10 +1548,16 @@ Demo relevance:
 Maps to the original requirement's backend auto-grading script.
 
 
-21. regrade_attempts_for_assessment(assessment_id)
+21. recalculate_scores()
 
 Status:
-Planned helper or backend script function.
+Implemented batch script in recalculate_scores.py.
+
+Command:
+python3 recalculate_scores.py
+
+Optional command:
+python3 recalculate_scores.py --assessment-id 1
 
 Purpose:
 Recalculate scores after the assessment due_date is changed in MySQL.
@@ -1561,10 +1572,13 @@ Expected database tables:
 
 Expected behavior:
 
-- Find all attempts for tasks under the assessment.
-- Recalculate raw_score from submitted answers.
+- Find all submitted/graded attempts for all students.
+- If --assessment-id is provided, only recalculate attempts under that
+  assessment.
+- Recalculate raw_score from submitted answers and current question keys.
 - Reapply late penalty using the current assessments.due_date.
-- Update attempts.final_score and late_penalty_applied.
+- Update submitted_answers.is_correct, submitted_answers.points_awarded,
+  attempts.raw_score, attempts.final_score, and attempts.late_penalty_applied.
 
 Demo relevance:
 Supports demo step 9.
@@ -1573,7 +1587,7 @@ Supports demo step 9.
 22. score()
 
 Status:
-Existing route, planned database-backed implementation.
+Implemented and database-backed.
 
 Route:
 /score
@@ -1604,7 +1618,7 @@ Expected behavior:
 23. leaderboard()
 
 Status:
-Existing route, planned database-backed implementation.
+Implemented and database-backed.
 
 Route:
 /leaderboard
@@ -1638,19 +1652,13 @@ For the MCQ adaptation, leaderboard uses best attempt per task, then sums those
 best task scores at course level.
 
 
-24. export_scores()
+24. export_score()
 
 Status:
-Planned script or route.
-
-Possible route:
-/export/scores
-
-Possible script:
-export_scores.py
+Implemented route in flask_app.py.
 
 Purpose:
-Export all scores into CSV.
+Export the logged-in student's visible scores into CSV.
 
 Expected database tables:
 
@@ -1662,17 +1670,15 @@ Expected database tables:
 
 Expected output columns:
 
-- username
-- full_name
 - course_code
-- course_name
 - assessment_title
 - task_title
+- questions
 - attempt_number
 - submitted_at
 - raw_score
+- penalty
 - final_score
-- late_penalty_applied
 - status
 
 Demo relevance:
@@ -1860,7 +1866,7 @@ Implemented and database-backed for currently enrolled courses.
   assessments in that course.
 
 Status:
-Planned. Current leaderboard page is not fully database-backed.
+Implemented and database-backed.
 
 
 9. Resubmit to improve score
@@ -1870,33 +1876,42 @@ Planned. Current leaderboard page is not fully database-backed.
 - Expected: new attempt row appears, best score improves.
 
 Status:
-Implemented for task attempts. Leaderboard best-attempt display still needs
-database integration.
+Implemented for task attempts. The course leaderboard uses the best graded
+attempt per task.
 
 
 10. Late penalty
 
 - Change assessment due_date in MySQL to before submitted_at.
-- Regrade or recalculate.
+- Example MySQL statement:
+
+  USE TCX2003_Project;
+
+  UPDATE assessments
+  SET due_date = '2026-07-11 23:59:59'
+  WHERE title = 'CS101 Assessment 1: Programming Basics';
+
+- Run python3 recalculate_scores.py.
 - Expected: final_score is raw_score * 0.9 and late_penalty_applied = TRUE.
 
 Status:
-Planned.
+Implemented through recalculate_scores.py.
 
 
 11. CSV export
 
-- Run export script or endpoint.
-- Expected: CSV contains all scores.
+- Open /score and click the export icon.
+- Confirm Export CSV.
+- Expected: CSV contains the logged-in student's visible score records.
 
 Status:
-Planned.
+Implemented through /score/export.
 
 
 High-priority remaining work
 ----------------------------
 
-1. Finish leaderboard database integration.
+1. Keep leaderboard demo data easy to explain.
 
 Required behavior:
 
@@ -1906,8 +1921,12 @@ Required behavior:
 - use a course dropdown
 - exclude dropped courses by joining through enrollment
 
+Status:
+Implemented. Before demo, verify CS101 has enough seeded attempts to show a
+meaningful top 5.
 
-2. Add late-score recalculation support.
+
+2. Validate late-score recalculation with a live MySQL reset.
 
 Required behavior:
 
@@ -1915,20 +1934,29 @@ Required behavior:
 - set late_penalty_applied correctly
 - keep raw_score unchanged
 
+Status:
+Implemented through recalculate_scores.py. Still needs manual verification against
+local MySQL after reset_db.sql is loaded.
 
-3. Add CSV score export.
+
+3. Keep CSV score export aligned with the score page.
 
 Required output:
 
-- student
 - course_code
 - assessment_title
 - task_title
+- questions
 - attempt_number
-- raw_score
-- final_score
-- late_penalty_applied
 - submitted_at
+- raw_score
+- penalty
+- final_score
+- status
+
+Status:
+Implemented through /score/export for the logged-in student's visible score
+records.
 
 
 4. Prepare final demo runbook.
