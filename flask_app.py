@@ -735,8 +735,105 @@ def leaderboard():
     username = session.get('username')
     if not username:
         return redirect(url_for('login'))
+    
+    connection = None
+    cursor = None
+    message = ''
+    courses = []
+    
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+        
+        cursor.execute(
+            '''
+            SELECT
+                c.course_id,
+                c.course_code,
+                c.course_name,
+                s.id AS student_id,
+                s.username,
+                s.full_name,
+                COUNT(DISTINCT t.task_id) AS total_tasks,
+                COUNT(DISTINCT CASE
+                    WHEN best_task.best_score IS NOT NULL THEN t.task_id
+                END) AS tasks_completed,
+                COALESCE(SUM(best_task.best_score), 0) AS course_score,
+                SUM(t.max_score) AS course_max_score
+            FROM enrollment e
+            JOIN students s ON s.id = e.student_id
+            JOIN courses c ON c.course_id = e.course_id
+            JOIN assessments a ON a.course_id = c.course_id
+            JOIN tasks t ON t.assessment_id = a.assessment_id
+            LEFT JOIN (
+                SELECT
+                    student_id,
+                    task_id,
+                    MAX(final_score) AS best_score
+                FROM attempts
+                WHERE status = 'graded'
+                GROUP BY student_id, task_id
+            ) best_task
+                ON best_task.student_id = s.id
+                AND best_task.task_id = t.task_id
+            GROUP BY
+                c.course_id,
+                c.course_code,
+                c.course_name,
+                s.id,
+                s.username,
+                s.full_name
+            ORDER BY
+                c.course_code,
+                course_score DESC,
+                tasks_completed DESC,
+                s.username
+            '''
+        )
+        rows = cursor.fetchall()
+        courses_by_id = {}
+        
+        for row in rows:
+            course = courses_by_id.setdefault(row['course_id'], {
+                'course_id': row['course_id'],
+                'course_code': row['course_code'],
+                'course_name': row['course_name'],
+                'leaders': []
+            })
+            
+            course_score = float(row['course_score'])
+            course_max_score = float(row['course_max_score'])
+            percentage = (course_score / course_max_score * 100) if course_max_score else 0
+            
+            course['leaders'].append({
+                'rank': len(course['leaders']) + 1,
+                'username': row['username'],
+                'full_name': row['full_name'],
+                'tasks_completed': row['tasks_completed'],
+                'total_tasks': row['total_tasks'],
+                'course_score': f'{course_score:.2f}',
+                'course_max_score': f'{course_max_score:.2f}',
+                'percentage': f'{percentage:.2f}'
+            })
 
-    return render_template('leaderboard.html')
+        for course in courses_by_id.values():
+            course['leaders'] = course['leaders'][:5]
+            courses.append(course)
+
+        
+    except Error as error:
+        message = f'Database error: {error}'
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
+    return render_template(
+        'leaderboard.html',
+        courses=courses,
+        message=message
+    )
 
 
 @app.route('/profile', methods=['GET', 'POST'])

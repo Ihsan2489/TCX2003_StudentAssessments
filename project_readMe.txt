@@ -798,14 +798,22 @@ Current page:
 Flow 9: Leaderboard - planned
 
 Project rule for this MCQ adaptation:
-Leaderboard uses each student's best attempt per task.
+Leaderboard ranks students by overall course score.
+
+Course score means:
+
+- for each student and task, use the student's best graded attempt
+- sum those best task scores across all assessments in the selected course
+- rank students within that course
 
 Expected query logic:
 
 1. For each student and task, take MAX(final_score).
-2. For each student and assessment, combine best task scores.
-3. Rank students by assessment score.
-4. Show top 5 students per assessment.
+2. For each student and course, combine best task scores from all assessments
+   in that course.
+3. Rank students by course_score.
+4. Show top 5 students per course.
+5. The leaderboard dropdown should list courses, not assessments.
 
 
 Flow 10: Late penalty demo - planned
@@ -1180,7 +1188,7 @@ Method:
 GET
 
 Purpose:
-Shows top students by assessment.
+Shows top students by overall course score.
 
 Current database tables used:
 None in current implementation.
@@ -1192,16 +1200,19 @@ Expected database tables:
 - assessments
 - tasks
 - attempts
+- enrollment
 
 Expected behavior:
 
-- Load leaderboard per assessment.
+- Load leaderboard per course.
+- Use a course dropdown, not an assessment dropdown.
 - For each student and task, use best final_score.
-- Aggregate best task scores per assessment.
+- Aggregate best task scores across all assessments in the course.
+- Exclude dropped courses by joining through enrollment.
 - Show top 5 students.
 
 Demo relevance:
-Supports demo step 7: show leaderboard for each assessment.
+Supports demo step 7: show leaderboard for each course.
 
 
 13. profile()
@@ -1537,24 +1548,29 @@ Method:
 GET
 
 Purpose:
-Show top 5 students per assessment.
+Show top 5 students per course.
 
 Expected database tables:
 
 - students
+- courses
 - assessments
 - tasks
 - attempts
+- enrollment
 
 Expected behavior:
 
 - For each student/task, take MAX(final_score).
-- Aggregate best task scores per assessment.
-- Rank students.
+- Aggregate best task scores across all assessments in the selected course.
+- Rank students by course_score.
+- Dropdown should list courses.
+- Exclude dropped courses by joining through enrollment.
 - Return top 5.
 
 Important project rule:
-For the MCQ adaptation, leaderboard uses best attempt per task.
+For the MCQ adaptation, leaderboard uses best attempt per task, then sums those
+best task scores at course level.
 
 
 24. export_scores()
@@ -1759,7 +1775,10 @@ Implemented and database-backed for currently enrolled courses.
 8. Show leaderboard
 
 - Open /leaderboard.
-- Expected: top 5 students by best attempt per task for each assessment.
+- Expected: course dropdown appears.
+- Expected: top 5 students are ranked by overall course score.
+- Expected: score is based on each student's best attempt per task across all
+  assessments in that course.
 
 Status:
 Planned. Current leaderboard page is not fully database-backed.
@@ -1803,8 +1822,10 @@ High-priority remaining work
 Required behavior:
 
 - use each student's best attempt per task
-- aggregate task scores per assessment
-- rank students by assessment
+- aggregate task scores across all assessments in each course
+- rank students by course_score
+- use a course dropdown
+- exclude dropped courses by joining through enrollment
 
 
 2. Add late-score recalculation support.
@@ -1869,4 +1890,5 @@ Late penalty:
 Calculated by comparing attempts.submitted_at with assessments.due_date.
 
 Best attempt leaderboard:
-For the MCQ adaptation, leaderboard uses each student's best attempt per task.
+For the MCQ adaptation, leaderboard uses each student's best attempt per task,
+then sums those best task scores across the selected course.
