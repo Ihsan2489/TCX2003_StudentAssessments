@@ -272,11 +272,32 @@ input:disabled {
     opacity: 0.65;
 }
 
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
 .secondary-button {
     border: 1px solid var(--line);
     background: var(--surface);
     color: var(--primary-dark);
     padding: 0 16px;
+}
+
+.icon-button {
+    width: 44px;
+    padding: 0;
+}
+
+.icon-button svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
 }
 
 .secondary-button:disabled {

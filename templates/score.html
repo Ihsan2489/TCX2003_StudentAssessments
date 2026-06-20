@@ -10,7 +10,22 @@
             <h3>View your submitted task attempts and grades.</h3>
             <p>Each row shows one submitted attempt, including raw score, late penalty, and final score.</p>
         </div>
-        <a class="secondary-button" href="{{ url_for('assessments') }}">Submit assessment</a>
+        <div class="button-group">
+            <a class="secondary-button" href="{{ url_for('assessments') }}">Submit assessment</a>
+            <button
+                class="secondary-button icon-button"
+                id="export-score-open-button"
+                type="button"
+                aria-label="Export scores"
+                title="Export scores"
+            >
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <path d="M12 3v12"></path>
+                    <path d="m7 10 5 5 5-5"></path>
+                    <path d="M5 21h14"></path>
+                </svg>
+            </button>
+        </div>
     </div>
 
     {% if message %}
@@ -74,5 +89,47 @@
         <a class="secondary-button" href="{{ url_for('assessments') }}">Go to assessments</a>
     </section>
     {% endif %}
+
+    <div class="modal-backdrop" id="export-score-modal" hidden>
+        <section class="modal" role="dialog" aria-modal="true" aria-labelledby="export-score-modal-title">
+            <h2 id="export-score-modal-title">Export scores?</h2>
+            <p>This will download your visible score records as a CSV file.</p>
+            <div class="modal-actions">
+                <button class="secondary-button" id="export-score-cancel-button" type="button">Cancel</button>
+                <a class="primary-button modal-primary-link" id="export-score-confirm-link" href="{{ url_for('export_score') }}">Export CSV</a>
+            </div>
+        </section>
+    </div>
 </section>
+
+<script>
+    const exportScoreOpenButton = document.getElementById("export-score-open-button");
+    const exportScoreCancelButton = document.getElementById("export-score-cancel-button");
+    const exportScoreConfirmLink = document.getElementById("export-score-confirm-link");
+    const exportScoreModal = document.getElementById("export-score-modal");
+
+    function openExportScoreModal() {
+        exportScoreModal.hidden = false;
+        exportScoreCancelButton.focus();
+    }
+
+    function closeExportScoreModal() {
+        exportScoreModal.hidden = true;
+        exportScoreOpenButton.focus();
+    }
+
+    exportScoreOpenButton.addEventListener("click", openExportScoreModal);
+    exportScoreCancelButton.addEventListener("click", closeExportScoreModal);
+    exportScoreConfirmLink.addEventListener("click", closeExportScoreModal);
+    exportScoreModal.addEventListener("click", (event) => {
+        if (event.target === exportScoreModal) {
+            closeExportScoreModal();
+        }
+    });
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !exportScoreModal.hidden) {
+            closeExportScoreModal();
+        }
+    });
+</script>
 {% endblock %}

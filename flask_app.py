@@ -1,8 +1,10 @@
-from flask import Flask, render_template, redirect, request, session, url_for
+from flask import Flask, render_template, redirect, request, session, url_for, Response
 import mysql.connector
 from mysql.connector import Error
 from werkzeug.security import generate_password_hash, check_password_hash
 from decimal import Decimal, ROUND_HALF_UP
+import csv
+import io
 # import re
 
 app = Flask(__name__)
@@ -642,77 +644,7 @@ def score():
             },
         ]
 
-        cursor.execute(
-            '''
-            SELECT
-                c.course_code,
-                a.title AS assessment_title,
-                t.title AS task_title,
-                t.max_score,
-                att.attempt_id,
-                att.attempt_number,
-                att.submitted_at,
-                att.raw_score,
-                att.final_score,
-                att.late_penalty_applied,
-                att.status,
-                COUNT(sa.submitted_answer_id) AS answered_questions,
-                COALESCE(SUM(CASE WHEN sa.is_correct = TRUE THEN 1 ELSE 0 END), 0) AS correct_answers
-            FROM attempts att
-            JOIN tasks t ON t.task_id = att.task_id
-            JOIN assessments a ON a.assessment_id = t.assessment_id
-            JOIN courses c ON c.course_id = a.course_id
-            JOIN enrollment e
-                ON e.course_id = c.course_id
-                AND e.student_id = att.student_id
-            LEFT JOIN submitted_answers sa ON sa.attempt_id = att.attempt_id
-            WHERE att.student_id = %s
-            AND att.status = 'graded'
-            GROUP BY
-                c.course_code,
-                a.title,
-                t.title,
-                t.max_score,
-                att.attempt_id,
-                att.attempt_number,
-                att.submitted_at,
-                att.raw_score,
-                att.final_score,
-                att.late_penalty_applied,
-                att.status
-            ORDER BY att.submitted_at DESC, att.attempt_id DESC
-            ''',
-            (student_id,)
-        )
-        attempts_data = cursor.fetchall()
-
-        for row in attempts_data:
-            status_label = 'Graded'
-            status_class = 'full'
-
-            if row['late_penalty_applied']:
-                status_label = 'Late penalty'
-                status_class = 'late'
-            elif row['final_score'] < row['max_score'] and row['attempt_number'] < 3:
-                status_label = 'Can retry'
-                status_class = 'partial'
-            elif row['attempt_number'] >= 3:
-                status_label = 'Final attempt'
-                status_class = 'partial'
-
-            submissions.append({
-                'course_code': row['course_code'],
-                'assessment_title': row['assessment_title'],
-                'task_title': row['task_title'],
-                'questions': f'{row["correct_answers"]} / {row["answered_questions"]}',
-                'attempt': f'{row["attempt_number"]} of 3',
-                'submitted': row['submitted_at'].strftime('%d %b %Y %H:%M') if row['submitted_at'] else 'Not submitted',
-                'raw_score': f'{float(row["raw_score"]):.2f}' if row['raw_score'] is not None else '-',
-                'penalty': '10%' if row['late_penalty_applied'] else 'None',
-                'final_score': f'{float(row["final_score"]):.2f}' if row['final_score'] is not None else '-',
-                'status_label': status_label,
-                'status_class': status_class
-            })
+        submissions = student_submission_table(cursor, student_id)
 
     except Error as error:
         message = f'Database error: {error}'
@@ -729,22 +661,82 @@ def score():
         message=message
     )
 
+@app.route('/score/export')
+def export_score():
+    username = session.get('username')
+    if not username:
+        return redirect(url_for('login'))
+
+    connection = None
+    cursor = None
+    message = ''
+
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        cursor.execute(
+            'SELECT id FROM students WHERE username = %s',
+            (username,)
+        )
+        student = cursor.fetchone()
+
+        if not student:
+            session.clear()
+            return redirect(url_for('login'))
+
+        student_id = student['id']
+
+        submissions = student_submission_table(cursor, student_id)
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['Course Code', 'Assessment Title', 'Task Title', 'Questions', 'Attempt', 'Submitted', 'Raw Score', 'Penalty', 'Final Score', 'Status'])
+
+        for submission in submissions:
+            writer.writerow([
+                submission['course_code'],
+                submission['assessment_title'],
+                submission['task_title'],
+                submission['questions'],
+                submission['attempt'],
+                submission['submitted'],
+                submission['raw_score'],
+                submission['penalty'],
+                submission['final_score'],
+                submission['status_label']
+            ])
+
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=score_export.csv'}
+        )
+
+    except Error as error:
+        message = f'Database error: {error}'
+        return render_template('score.html', message=message, submissions=[])
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
 
 @app.route('/leaderboard')
 def leaderboard():
     username = session.get('username')
     if not username:
         return redirect(url_for('login'))
-    
+
     connection = None
     cursor = None
     message = ''
     courses = []
-    
+
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
+
         cursor.execute(
             '''
             SELECT
@@ -792,7 +784,7 @@ def leaderboard():
         )
         rows = cursor.fetchall()
         courses_by_id = {}
-        
+
         for row in rows:
             course = courses_by_id.setdefault(row['course_id'], {
                 'course_id': row['course_id'],
@@ -800,11 +792,11 @@ def leaderboard():
                 'course_name': row['course_name'],
                 'leaders': []
             })
-            
+
             course_score = float(row['course_score'])
             course_max_score = float(row['course_max_score'])
             percentage = (course_score / course_max_score * 100) if course_max_score else 0
-            
+
             course['leaders'].append({
                 'rank': len(course['leaders']) + 1,
                 'username': row['username'],
@@ -820,7 +812,7 @@ def leaderboard():
             course['leaders'] = course['leaders'][:5]
             courses.append(course)
 
-        
+
     except Error as error:
         message = f'Database error: {error}'
     finally:
@@ -847,29 +839,29 @@ def profile():
 
     connection = None
     cursor = None
-    
+
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
+
         cursor.execute('SELECT username, full_name, email, password_hash FROM students WHERE username = %s', (username,))
         user = cursor.fetchone()
-        
+
         if not user:
             session.clear()
             return redirect(url_for('login'))
-        
+
         profile_user = {
             'username': user['username'],
             'full_name': user['full_name'],
             'email': user['email']
         }
-        
+
         if request.method == 'POST':
             current_password = request.form.get('current_password', '')
             new_password = request.form.get('new_password', '')
             confirm_password = request.form.get('confirm_password', '')
-            
+
             if not current_password or not new_password or not confirm_password:
                 message = 'Please fill out all password fields.'
                 message_type = 'error'
@@ -884,13 +876,13 @@ def profile():
                 message_type = 'error'
             else:
                 new_password_hash = generate_password_hash(new_password)
-                
+
                 cursor.execute(
                     'UPDATE students SET password_hash = %s WHERE username = %s',
                     (new_password_hash, username)
                 )
                 connection.commit()
-                
+
                 message = 'Password updated successfully.'
                 message_type = 'success'
     except Error as error:
@@ -960,3 +952,80 @@ def build_assessment_tree(rows):
             assessment['tasks'] = list(assessment['tasks'].values())
 
     return courses
+
+def student_submission_table(cursor, student_id):
+    cursor.execute(
+        '''
+        SELECT
+            c.course_code,
+            a.title AS assessment_title,
+            t.title AS task_title,
+            t.max_score,
+            att.attempt_id,
+            att.attempt_number,
+            att.submitted_at,
+            att.raw_score,
+            att.final_score,
+            att.late_penalty_applied,
+            att.status,
+            COUNT(sa.submitted_answer_id) AS answered_questions,
+            COALESCE(SUM(CASE WHEN sa.is_correct = TRUE THEN 1 ELSE 0 END), 0) AS correct_answers
+        FROM attempts att
+        JOIN tasks t ON t.task_id = att.task_id
+        JOIN assessments a ON a.assessment_id = t.assessment_id
+        JOIN courses c ON c.course_id = a.course_id
+        JOIN enrollment e
+            ON e.course_id = c.course_id
+            AND e.student_id = att.student_id
+        LEFT JOIN submitted_answers sa ON sa.attempt_id = att.attempt_id
+        WHERE att.student_id = %s
+        AND att.status = 'graded'
+        GROUP BY
+            c.course_code,
+            a.title,
+            t.title,
+            t.max_score,
+            att.attempt_id,
+            att.attempt_number,
+            att.submitted_at,
+            att.raw_score,
+            att.final_score,
+            att.late_penalty_applied,
+            att.status
+        ORDER BY att.submitted_at DESC, att.attempt_id DESC
+        ''',
+        (student_id,)
+    )
+    attempts_data = cursor.fetchall()
+
+    submissions = []
+
+    for row in attempts_data:
+        status_label = 'Graded'
+        status_class = 'full'
+
+        if row['late_penalty_applied']:
+            status_label = 'Late penalty'
+            status_class = 'late'
+        elif row['final_score'] < row['max_score'] and row['attempt_number'] < 3:
+            status_label = 'Can retry'
+            status_class = 'partial'
+        elif row['attempt_number'] >= 3:
+            status_label = 'Final attempt'
+            status_class = 'partial'
+
+        submissions.append({
+            'course_code': row['course_code'],
+            'assessment_title': row['assessment_title'],
+            'task_title': row['task_title'],
+            'questions': f'{row["correct_answers"]} / {row["answered_questions"]}',
+            'attempt': f'{row["attempt_number"]} of 3',
+            'submitted': row['submitted_at'].strftime('%d %b %Y %H:%M') if row['submitted_at'] else 'Not submitted',
+            'raw_score': f'{float(row["raw_score"]):.2f}' if row['raw_score'] is not None else '-',
+            'penalty': '10%' if row['late_penalty_applied'] else 'None',
+            'final_score': f'{float(row["final_score"]):.2f}' if row['final_score'] is not None else '-',
+            'status_label': status_label,
+            'status_class': status_class
+        })
+
+    return submissions
