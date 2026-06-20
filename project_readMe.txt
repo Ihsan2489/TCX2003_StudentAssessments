@@ -527,7 +527,10 @@ because they preserve grading history and make the demo easier to explain.
 Seeded tester accounts and demo data
 ------------------------------------
 
-The seed data includes five tester accounts for demo and testing.
+The seed data includes seven tester accounts for demo and testing.
+
+All tester accounts are enrolled in CS101 so the course-level leaderboard can
+show a top 5 ranking from one course.
 
 All tester accounts use the same password:
 
@@ -613,9 +616,15 @@ Login:
 
 Enrolled courses:
 
+- CS101
 - CS102
 
 Seeded attempts:
+
+- CS101 / Variables and Data Types
+  - Attempt 1: raw_score = 5.00
+  - final_score = 4.50
+  - late_penalty_applied = TRUE
 
 - CS102 / SQL Basics
   - Attempt 1: raw_score = 5.00
@@ -627,6 +636,8 @@ Demo use:
 - Shows the late penalty scenario.
 - Useful for explaining raw_score versus final_score.
 - Useful for verifying that the score page displays late penalties correctly.
+- Useful for showing a CS101 leaderboard student whose final_score is reduced
+  by penalty.
 
 
 4. hannah04
@@ -641,9 +652,13 @@ Login:
 
 Enrolled courses:
 
+- CS101
 - CS201
 
 Seeded attempts:
+
+- CS101 / Loops
+  - Attempt 1: raw_score = 3.00, final_score = 3.00
 
 - CS201 / Logic and Sets
   - Attempt 1: raw_score = 3.00, final_score = 3.00
@@ -684,6 +699,56 @@ Demo use:
 - Useful for explaining why attempt_number is part of the attempts table.
 
 
+6. zara06
+---------
+
+Login:
+
+- username: zara06
+- password: Tester123!
+- full_name: Zara tester
+- email: zara06@gmail.com
+
+Enrolled courses:
+
+- CS101
+
+Seeded attempts:
+
+- CS101 / Functions and Lists
+  - Attempt 1: raw_score = 4.00, final_score = 4.00
+
+Demo use:
+
+- Adds another CS101 leaderboard competitor.
+- Shows a partial score that can still be improved.
+
+
+7. zain07
+---------
+
+Login:
+
+- username: zain07
+- password: Tester123!
+- full_name: Zain tester
+- email: zain07@gmail.com
+
+Enrolled courses:
+
+- CS101
+
+Seeded attempts:
+
+- CS101 / Variables and Data Types
+  - Attempt 1: raw_score = 2.00, final_score = 2.00
+
+Demo use:
+
+- Adds another CS101 enrolled student.
+- Shows a low partial score that can still be improved.
+
+
 Seeded demo data counts
 -----------------------
 
@@ -693,10 +758,10 @@ After a clean reset with reset_db.sql, the demo database should contain:
 - 5 assessments
 - 8 tasks
 - 40 questions
-- 5 tester students
-- 8 enrollment rows
-- 10 graded attempt rows
-- 50 submitted answer rows
+- 7 tester students
+- 12 enrollment rows
+- 14 graded attempt rows
+- 70 submitted answer rows
 
 
 Project and demo flows
@@ -1651,11 +1716,14 @@ Demo users:
 - danial03
 - hannah04
 - rayan05
+- zara06
+- zain07
 
 Implemented behavior:
 
 - Insert users with hashed passwords.
 - Enroll users into courses.
+- Enroll every tester account in CS101 for course leaderboard demo.
 - Create sample attempts for score and leaderboard demo.
 - Create submitted_answers rows so each seeded attempt has 5 answer records.
 
@@ -1680,6 +1748,17 @@ Preparation checklist:
   SELECT COUNT(*) FROM enrollment;
   SELECT COUNT(*) FROM attempts;
   SELECT COUNT(*) FROM submitted_answers;
+
+- Confirm every tester is enrolled in CS101:
+  SELECT s.username
+  FROM students s
+  JOIN enrollment e ON e.student_id = s.id
+  JOIN courses c ON c.course_id = e.course_id
+  WHERE c.course_code = 'CS101'
+  ORDER BY s.username;
+
+Expected result:
+adam01, danial03, hannah04, rayan05, sarah02, zain07, zara06.
 
 - Confirm every task has exactly 5 questions:
   SELECT t.task_id, t.title, COUNT(q.question_id) AS question_count
