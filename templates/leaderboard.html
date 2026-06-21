@@ -7,81 +7,103 @@
     <div class="page-heading">
         <div>
             <h1 class="eyebrow">Leaderboard</h1>
-            <h3>Top students by course assessment scores.</h3>
-            <p>Rankings use each student's best attempt per task. Late submissions show the 10% penalty in score pages.</p>
+            <h3>Top students by course score.</h3>
+            <p>Rankings use each student's best attempt per task across all assessments in the course.</p>
         </div>
     </div>
 
+    {% if message %}
+    <p class="form-message">{{ message }}</p>
+    {% endif %}
+
+    {% if courses %}
     <div class="filter-row">
-        <label for="course-filter">Filter by course:</label>
+        <label for="course-filter">Course:</label>
         <select id="course-filter" aria-label="Course filter">
-            <option value="overall">Overall</option>
-            <option value="CS2102">Database Systems</option>
-            <option value="CS1010">Introduction to Programming</option>
-            <option value="CS1231">Computing Maths</option>
+            {% for course in courses %}
+            <option value="course-{{ course.course_id }}">
+                {{ course.course_code }} - {{ course.course_name }}
+            </option>
+            {% endfor %}
         </select>
     </div>
 
-    <section class="panel">
+    {% for course in courses %}
+    <section class="panel leaderboard-panel" id="course-{{ course.course_id }}">
         <div class="panel-heading">
-            <h2>Top students</h2>
+            <h2>{{ course.course_code }} - {{ course.course_name }}</h2>
         </div>
-        <div class="leader-list" id="student-leader-list"></div>
-    </section>
-</section>
 
-<script type="application/json" id="leaderboard-data">
-{
-    "overall": [
-        {"rank": 1, "username": "student04", "coursesJoined": 3, "tasksCompleted": 12, "assessmentsCompleted": 6, "average": 98},
-        {"rank": 2, "username": "student01", "coursesJoined": 2, "tasksCompleted": 8, "assessmentsCompleted": 4, "average": 92},
-        {"rank": 3, "username": "student08", "coursesJoined": 2, "tasksCompleted": 7, "assessmentsCompleted": 3, "average": 88},
-        {"rank": 4, "username": "student03", "coursesJoined": 1, "tasksCompleted": 4, "assessmentsCompleted": 2, "average": 84},
-        {"rank": 5, "username": "student11", "coursesJoined": 1, "tasksCompleted": 3, "assessmentsCompleted": 1, "average": 81}
-    ],
-    "CS2102": [
-        {"rank": 1, "username": "student04", "coursesJoined": 3, "tasksCompleted": 4, "assessmentsCompleted": 2, "average": 98},
-        {"rank": 2, "username": "student01", "coursesJoined": 2, "tasksCompleted": 4, "assessmentsCompleted": 2, "average": 92},
-        {"rank": 3, "username": "student11", "coursesJoined": 1, "tasksCompleted": 3, "assessmentsCompleted": 1, "average": 81}
-    ],
-    "CS1010": [
-        {"rank": 1, "username": "student08", "coursesJoined": 2, "tasksCompleted": 4, "assessmentsCompleted": 2, "average": 88},
-        {"rank": 2, "username": "student06", "coursesJoined": 2, "tasksCompleted": 3, "assessmentsCompleted": 1, "average": 83},
-        {"rank": 3, "username": "student12", "coursesJoined": 1, "tasksCompleted": 2, "assessmentsCompleted": 1, "average": 77}
-    ],
-    "CS1231": [
-        {"rank": 1, "username": "student03", "coursesJoined": 1, "tasksCompleted": 4, "assessmentsCompleted": 2, "average": 84},
-        {"rank": 2, "username": "student09", "coursesJoined": 2, "tasksCompleted": 3, "assessmentsCompleted": 1, "average": 79},
-        {"rank": 3, "username": "student05", "coursesJoined": 1, "tasksCompleted": 2, "assessmentsCompleted": 1, "average": 72}
-    ]
-}
-</script>
+        {% if course.leaders %}
+        <div class="leaderboard-analytics" aria-label="Course score analytics">
+            <article class="analytics-card">
+                <span>Mean</span>
+                <strong>{{ course.analytics.mean_percentage }}</strong>
+            </article>
+            <article class="analytics-card">
+                <span>Median</span>
+                <strong>{{ course.analytics.median_percentage }}</strong>
+            </article>
+            <article class="analytics-card">
+                <span>Mode</span>
+                <strong>{{ course.analytics.mode_percentage }}</strong>
+            </article>
+        </div>
 
-<script>
-    const leaderboardData = JSON.parse(document.getElementById("leaderboard-data").textContent);
-    const filter = document.getElementById("course-filter");
-    const studentLeaderList = document.getElementById("student-leader-list");
+        {% if course.chart_base64 %}
+        <div class="leaderboard-chart">
+            <img
+                src="data:image/png;base64,{{ course.chart_base64 }}"
+                alt="{{ course.course_code }} course score distribution chart"
+            >
+        </div>
+        {% endif %}
 
-    function renderLeaderboard(courseId) {
-        studentLeaderList.innerHTML = "";
-        leaderboardData[courseId].forEach((student) => {
-            const item = document.createElement("article");
-            item.className = "leader-row";
-            item.innerHTML = `
+        <div class="leader-list">
+            {% for student in course.leaders %}
+            <article class="leader-row">
                 <div class="leader-left">
-                    <span class="leader-rank">${student.rank}</span>
+                    <span class="leader-rank">{{ student.rank }}</span>
                     <div>
-                        <h3>${student.username}</h3>
-                        <p>${student.coursesJoined} courses joined · ${student.tasksCompleted} tasks completed · ${student.assessmentsCompleted} assessments completed</p>
+                        <h3>{{ student.full_name }}</h3>
+                        <p>
+                            {{ student.username }} ·
+                            {{ student.tasks_completed }} / {{ student.total_tasks }} tasks completed
+                        </p>
                     </div>
                 </div>
-                <span class="badge leader-score">${student.average}% average</span>
-            `;
-            studentLeaderList.appendChild(item);
-        });
-    }
+                <span class="badge leader-score">
+                    {{ student.course_score }} / {{ student.course_max_score }}
+                    ({{ student.percentage }}%)
+                </span>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>No enrolled students for this course yet.</p>
+        {% endif %}
+    </section>
+    {% endfor %}
+    <script>
+        const courseFilter = document.getElementById("course-filter");
+        const leaderboardPanels = document.querySelectorAll(".leaderboard-panel");
 
-    filter.addEventListener("change", () => renderLeaderboard(filter.value));
-    renderLeaderboard(filter.value);
-</script>
+        function showSelectedCourse() {
+            leaderboardPanels.forEach((panel) => {
+                panel.hidden = panel.id !== courseFilter.value;
+            });
+        }
+
+        courseFilter.addEventListener("change", showSelectedCourse);
+        showSelectedCourse();
+    </script>
+    {% else %}
+    <section class="panel">
+        <div class="panel-heading">
+            <h2>No leaderboard data yet</h2>
+        </div>
+        <p>Students need to be enrolled in courses before rankings can be shown.</p>
+    </section>
+    {% endif %}
+</section>
 {% endblock %}

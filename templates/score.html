@@ -5,22 +5,53 @@
 {% block content %}
 <section class="score-page">
     <div class="page-heading">
-        <div>
+         <div>
             <h1 class="eyebrow">Personal scores</h1>
-            <h3>View assessment grades and personal scoring.</h3>
-            <p>Each assessment score is based on task question sets, with up to 3 attempts per assessment.</p>
+            <h3>View your submitted task attempts and grades.</h3>
+            <p>Each row shows one submitted attempt, including raw score, late penalty, and final score.</p>
         </div>
-        <a class="secondary-button" href="{{ url_for('assessments') }}">Resubmit SQL</a>
+        <div class="button-group">
+            <a class="secondary-button" href="{{ url_for('assessments') }}">Submit assessment</a>
+            <button
+                class="secondary-button icon-button"
+                id="export-score-open-button"
+                type="button"
+                aria-label="Export scores"
+                title="Export scores"
+            >
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <path d="M12 3v12"></path>
+                    <path d="m7 10 5 5 5-5"></path>
+                    <path d="M5 21h14"></path>
+                </svg>
+            </button>
+        </div>
     </div>
 
-    <div class="score-grid" id="score-summary"></div>
+    {% if message %}
+    <p class="form-message">{{ message }}</p>
+    {% endif %}
 
+    <div class="score-grid">
+        {% for item in summary %}
+        <article class="score-card{% if item.label == 'Enrolled courses' %} score-card-wide{% endif %}">
+            <div class="score-header">
+                <h2>{{ item.label }}</h2>
+            </div>
+            <div class="score-value">{{ item.value }}</div>
+        </article>
+        {% endfor %}
+    </div>
+
+    {% if submissions %}
     <table class="score-table" aria-label="Submission scores">
         <thead>
             <tr>
+                <th>Course</th>
                 <th>Assessment</th>
+                <th>Task</th>
                 <th>Questions</th>
-                <th>Best attempt</th>
+                <th>Attempt</th>
                 <th>Submitted</th>
                 <th>Raw score</th>
                 <th>Penalty</th>
@@ -28,51 +59,77 @@
                 <th>Status</th>
             </tr>
         </thead>
-        <tbody id="score-table-body"></tbody>
+        <tbody>
+            {% for submission in submissions %}
+            <tr>
+                <td>{{ submission.course_code }}</td>
+                <td>{{ submission.assessment_title }}</td>
+                <td>{{ submission.task_title }}</td>
+                <td>{{ submission.questions }}</td>
+                <td>{{ submission.attempt }}</td>
+                <td>{{ submission.submitted }}</td>
+                <td>{{ submission.raw_score }}</td>
+                <td>{{ submission.penalty }}</td>
+                <td>{{ submission.final_score }}</td>
+                <td>
+                    <span class="status-badge {{ submission.status_class }}">
+                        {{ submission.status_label }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
+    {% else %}
+    <section class="panel">
+        <div class="panel-heading">
+            <h2>No scores yet</h2>
+        </div>
+        <p>Submit an assessment task first to see your marks here.</p>
+        <a class="secondary-button" href="{{ url_for('assessments') }}">Go to assessments</a>
+    </section>
+    {% endif %}
+
+    <div class="modal-backdrop" id="export-score-modal" hidden>
+        <section class="modal" role="dialog" aria-modal="true" aria-labelledby="export-score-modal-title">
+            <h2 id="export-score-modal-title">Export scores?</h2>
+            <p>This will download your visible score records as a CSV file.</p>
+            <div class="modal-actions">
+                <button class="secondary-button" id="export-score-cancel-button" type="button">Cancel</button>
+                <a class="primary-button modal-primary-link" id="export-score-confirm-link" href="{{ url_for('export_score') }}">Export CSV</a>
+            </div>
+        </section>
+    </div>
 </section>
 
-<script type="application/json" id="score-data">
-{
-    "summary": [
-        {"label": "Personal average", "value": "86%"},
-        {"label": "Selected courses", "value": "CS2102, CS1010"},
-        {"label": "Late penalties", "value": "1"}
-    ],
-    "submissions": [
-        {"aid": "A01", "title": "Book exchange joins", "questions": "5 / 5", "attempt": "2 of 3", "submitted": "12 May 2026 09:15", "rawScore": 100, "latePenalty": 0, "finalScore": 100, "status": "Completed"},
-        {"aid": "A02", "title": "Aggregation basics", "questions": "4 / 5", "attempt": "1 of 3", "submitted": "13 May 2026 11:20", "rawScore": 80, "latePenalty": 0, "finalScore": 80, "status": "Can retry"},
-        {"aid": "A02", "title": "Subqueries and filters", "questions": "4 / 5", "attempt": "3 of 3", "submitted": "20 May 2026 15:40", "rawScore": 78, "latePenalty": 10, "finalScore": 70.2, "status": "Late penalty"}
-    ]
-}
-</script>
-
 <script>
-    const scoreData = JSON.parse(document.getElementById("score-data").textContent);
-    const summaryNode = document.getElementById("score-summary");
-    const tableBody = document.getElementById("score-table-body");
+    const exportScoreOpenButton = document.getElementById("export-score-open-button");
+    const exportScoreCancelButton = document.getElementById("export-score-cancel-button");
+    const exportScoreConfirmLink = document.getElementById("export-score-confirm-link");
+    const exportScoreModal = document.getElementById("export-score-modal");
 
-    scoreData.summary.forEach((item) => {
-        const card = document.createElement("article");
-        card.className = "score-card";
-        card.innerHTML = `<div class="score-header"><h2>${item.label}</h2></div><div class="score-value">${item.value}</div>`;
-        summaryNode.appendChild(card);
+    function openExportScoreModal() {
+        exportScoreModal.hidden = false;
+        exportScoreCancelButton.focus();
+    }
+
+    function closeExportScoreModal() {
+        exportScoreModal.hidden = true;
+        exportScoreOpenButton.focus();
+    }
+
+    exportScoreOpenButton.addEventListener("click", openExportScoreModal);
+    exportScoreCancelButton.addEventListener("click", closeExportScoreModal);
+    exportScoreConfirmLink.addEventListener("click", closeExportScoreModal);
+    exportScoreModal.addEventListener("click", (event) => {
+        if (event.target === exportScoreModal) {
+            closeExportScoreModal();
+        }
     });
-
-    scoreData.submissions.forEach((submission) => {
-        const row = document.createElement("tr");
-        const statusClass = submission.status === "Late penalty" ? "late" : submission.status === "Can retry" ? "partial" : "full";
-        row.innerHTML = `
-            <td>${submission.aid}: ${submission.title}</td>
-            <td>${submission.questions}</td>
-            <td>${submission.attempt}</td>
-            <td>${submission.submitted}</td>
-            <td>${submission.rawScore}%</td>
-            <td>${submission.latePenalty ? `-${submission.latePenalty}%` : "None"}</td>
-            <td>${submission.finalScore}%</td>
-            <td><span class="status-badge ${statusClass}">${submission.status}</span></td>
-        `;
-        tableBody.appendChild(row);
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !exportScoreModal.hidden) {
+            closeExportScoreModal();
+        }
     });
 </script>
 {% endblock %}

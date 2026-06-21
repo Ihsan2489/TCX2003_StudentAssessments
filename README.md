@@ -10,6 +10,7 @@ source .venv/bin/activate
 
 pip install flask
 pip install mysql-connector-python
+pip install matplotlib
 ```
 
 ## Database Setup
@@ -79,4 +80,38 @@ The final validation query should return zero rows. If it returns rows, those ta
 
 ```bash
 flask --app flask_app run --debug
+```
+
+## Session Audit Check
+
+After logging in and logging out, verify database-backed session tracking:
+
+```sql
+USE TCX2003_Project;
+
+SELECT
+    s.username,
+    se.created_at,
+    se.expires_at,
+    se.logged_out_at,
+    se.ip_address
+FROM sessions se
+JOIN students s ON s.id = se.student_id
+ORDER BY se.created_at DESC
+LIMIT 5;
+```
+
+## Batch Score Recalculation
+
+After changing an assessment `due_date` directly in MySQL, recalculate stored
+attempt scores for all students:
+
+```bash
+python3 recalculate_scores.py
+```
+
+To recalculate only one assessment:
+
+```bash
+python3 recalculate_scores.py --assessment-id 1
 ```

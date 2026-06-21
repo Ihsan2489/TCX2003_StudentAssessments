@@ -143,7 +143,7 @@ This prevents duplicate enrollment for the same student and course.
 -----------
 
 Purpose:
-Stores login session records if session-token tracking is implemented.
+Stores login session records for audit tracking.
 
 Columns:
 
@@ -183,8 +183,10 @@ Columns:
   - Nullable
 
 Current implementation note:
-The current Flask app uses Flask's session object. The sessions table exists in
-the schema but is not fully used yet.
+The app still uses Flask's session object for normal browser login state. On
+successful login, it also inserts one row into sessions with a secure
+session_token, expiry time, IP address, and user agent. On logout, it updates
+sessions.logged_out_at.
 
 
 5. assessments
@@ -352,6 +354,7 @@ Columns:
   - NOT NULL
   - Defaults to 1
   - Must be assigned by backend logic as 1, 2, or 3
+  - Database CHECK constraint enforces attempt_number BETWEEN 1 AND 3
 
 - started_at
   - DATETIME
@@ -387,6 +390,10 @@ Unique key:
 - (student_id, task_id, attempt_number)
 
 This prevents duplicate attempt numbers for the same student and task.
+
+Check constraint:
+
+- check_attempt_number ensures attempt_number is between 1 and 3.
 
 Backend must still block attempt_number greater than 3.
 
@@ -524,6 +531,246 @@ These are redundant from a strict normalization perspective, but acceptable here
 because they preserve grading history and make the demo easier to explain.
 
 
+Seeded tester accounts and demo data
+------------------------------------
+
+The seed data includes seven tester accounts for demo and testing.
+
+All tester accounts are enrolled in CS101 so the course-level leaderboard can
+show a top 5 ranking from one course.
+
+All tester accounts use the same password:
+
+- Tester123!
+
+Important:
+The password is stored in the database as a Werkzeug password hash. The plaintext
+password is listed here only so the team can log in during the demo.
+
+
+1. adam01
+---------
+
+Login:
+
+- username: adam01
+- password: Tester123!
+- full_name: Adam tester
+- email: adam01@gmail.com
+
+Enrolled courses:
+
+- CS101
+- CS102
+- CS201
+
+Seeded attempts:
+
+- CS102 / Relational Model
+  - Attempt 1: raw_score = 2.00, final_score = 2.00
+  - Attempt 2: raw_score = 5.00, final_score = 5.00
+
+- CS101 / Variables and Data Types
+  - Attempt 1: raw_score = 5.00, final_score = 5.00
+
+Demo use:
+
+- Shows a student enrolled in all 3 courses.
+- Shows resubmission improvement from partial marks to full marks.
+- Useful for demonstrating that personal scores show multiple attempts.
+- Useful for leaderboard testing because Adam has a best full-mark attempt.
+
+
+2. sarah02
+----------
+
+Login:
+
+- username: sarah02
+- password: Tester123!
+- full_name: Sarah tester
+- email: sarah02@gmail.com
+
+Enrolled courses:
+
+- CS101
+- CS102
+
+Seeded attempts:
+
+- CS101 / Variables and Data Types
+  - Attempt 1: raw_score = 5.00, final_score = 5.00
+
+- CS102 / SQL Basics
+  - Attempt 1: raw_score = 4.00, final_score = 4.00
+
+Demo use:
+
+- Shows a student with both full-mark and partial-mark attempts.
+- Useful for personal score page testing.
+- Useful for leaderboard comparison against Adam and Danial.
+
+
+3. danial03
+-----------
+
+Login:
+
+- username: danial03
+- password: Tester123!
+- full_name: Danial tester
+- email: danial03@gmail.com
+
+Enrolled courses:
+
+- CS101
+- CS102
+
+Seeded attempts:
+
+- CS101 / Variables and Data Types
+  - Attempt 1: raw_score = 5.00
+  - final_score = 4.50
+  - late_penalty_applied = TRUE
+
+- CS102 / SQL Basics
+  - Attempt 1: raw_score = 5.00
+  - final_score = 4.50
+  - late_penalty_applied = TRUE
+
+Demo use:
+
+- Shows the late penalty scenario.
+- Useful for explaining raw_score versus final_score.
+- Useful for verifying that the score page displays late penalties correctly.
+- Useful for showing a CS101 leaderboard student whose final_score is reduced
+  by penalty.
+
+
+4. hannah04
+-----------
+
+Login:
+
+- username: hannah04
+- password: Tester123!
+- full_name: Hannah tester
+- email: hannah04@gmail.com
+
+Enrolled courses:
+
+- CS101
+- CS201
+
+Seeded attempts:
+
+- CS101 / Loops
+  - Attempt 1: raw_score = 3.00, final_score = 3.00
+
+- CS201 / Logic and Sets
+  - Attempt 1: raw_score = 3.00, final_score = 3.00
+
+Demo use:
+
+- Shows a partial attempt where the student can still retry.
+- Useful for verifying that assessments and scores are filtered by enrolled
+  courses.
+
+
+5. rayan05
+----------
+
+Login:
+
+- username: rayan05
+- password: Tester123!
+- full_name: Rayan tester
+- email: rayan05@gmail.com
+
+Enrolled courses:
+
+- CS101
+
+Seeded attempts:
+
+- CS101 / Conditionals
+  - Attempt 1: raw_score = 2.00, final_score = 2.00
+  - Attempt 2: raw_score = 3.00, final_score = 3.00
+  - Attempt 3: raw_score = 4.00, final_score = 4.00
+
+Demo use:
+
+- Shows the 3-attempt limit.
+- Useful for verifying that the assessment page disables or blocks another
+  submission after 3 attempts.
+- Useful for explaining why attempt_number is part of the attempts table.
+
+
+6. zara06
+---------
+
+Login:
+
+- username: zara06
+- password: Tester123!
+- full_name: Zara tester
+- email: zara06@gmail.com
+
+Enrolled courses:
+
+- CS101
+
+Seeded attempts:
+
+- CS101 / Functions and Lists
+  - Attempt 1: raw_score = 4.00, final_score = 4.00
+
+Demo use:
+
+- Adds another CS101 leaderboard competitor.
+- Shows a partial score that can still be improved.
+
+
+7. zain07
+---------
+
+Login:
+
+- username: zain07
+- password: Tester123!
+- full_name: Zain tester
+- email: zain07@gmail.com
+
+Enrolled courses:
+
+- CS101
+
+Seeded attempts:
+
+- CS101 / Variables and Data Types
+  - Attempt 1: raw_score = 2.00, final_score = 2.00
+
+Demo use:
+
+- Adds another CS101 enrolled student.
+- Shows a low partial score that can still be improved.
+
+
+Seeded demo data counts
+-----------------------
+
+After a clean reset with reset_db.sql, the demo database should contain:
+
+- 3 courses
+- 5 assessments
+- 8 tasks
+- 40 questions
+- 7 tester students
+- 12 enrollment rows
+- 14 graded attempt rows
+- 70 submitted answer rows
+
+
 Project and demo flows
 ----------------------
 
@@ -544,15 +791,17 @@ Flow 2: Login
 2. Student enters username and password.
 3. Flask fetches matching student by username.
 4. Flask checks submitted password against students.password_hash.
-5. If valid, Flask stores username, full_name, and email in session.
-6. Student is redirected to /home.
+5. If valid, Flask inserts a row into sessions for audit tracking.
+6. Flask stores username, full_name, email, and db_session_token in session.
+7. Student is redirected to /home.
 
 
 Flow 3: Logout
 
 1. Student clicks logout.
-2. Flask clears the session.
-3. Student is redirected to /login.
+2. Flask updates sessions.logged_out_at for the current db_session_token.
+3. Flask clears the session.
+4. Student is redirected to /login.
 
 
 Flow 4: Add course
@@ -592,11 +841,9 @@ Flow 6: View assessments
 7. Selected task displays due date, attempt number, max score, and all 5 MCQs.
 
 
-Flow 7: Submit MCQ attempt - planned
+Flow 7: Submit MCQ attempt
 
-This is the next major missing feature.
-
-Expected backend flow:
+Backend flow:
 
 1. Student selects answers for the 5 questions.
 2. Student submits task attempt.
@@ -612,46 +859,58 @@ Expected backend flow:
 12. Flask updates attempts with score, late flag, and status='graded'.
 
 
-Flow 8: View personal scores - planned
+Flow 8: View personal scores
 
-Expected page:
+Current page:
 
 1. Student opens /score.
-2. Flask loads all attempts for that student.
+2. Flask loads graded attempts for that student from currently enrolled courses.
 3. Page shows course, assessment, task, attempt number, raw_score, final_score,
    late penalty status, and submitted_at.
 
 
-Flow 9: Leaderboard - planned
+Flow 9: Leaderboard
 
 Project rule for this MCQ adaptation:
-Leaderboard uses each student's best attempt per task.
+Leaderboard ranks students by overall course score.
 
-Expected query logic:
+Course score means:
+
+- for each student and task, use the student's best graded attempt
+- sum those best task scores across all assessments in the selected course
+- rank students within that course
+
+Current query logic:
 
 1. For each student and task, take MAX(final_score).
-2. For each student and assessment, combine best task scores.
-3. Rank students by assessment score.
-4. Show top 5 students per assessment.
+2. For each student and course, combine best task scores from all assessments
+   in that course.
+3. Rank students by course_score.
+4. Show top 5 students per course.
+5. The leaderboard dropdown should list courses, not assessments.
+6. Only currently enrolled students are included because the query starts from
+   enrollment.
 
 
-Flow 10: Late penalty demo - planned
+Flow 10: Late penalty demo
 
 1. Student submits an attempt before due date.
 2. Score is shown without penalty.
 3. Change assessment due_date directly in MySQL to a time before submitted_at.
-4. Recalculate/regrade.
+4. Run python3 recalculate_scores.py.
 5. Score should show 10% penalty.
 
 
-Flow 11: CSV export - planned
+Flow 11: CSV export
 
-Expected export:
+Current export:
 
-1. Run backend export script or route.
-2. Export all student scores to CSV.
-3. CSV should include student, course, assessment, task, attempt_number,
-   raw_score, final_score, late_penalty_applied, and submitted_at.
+1. Open /score.
+2. Click the export icon.
+3. Confirm Export CSV.
+4. The route downloads the logged-in student's visible score records.
+5. CSV includes course, assessment, task, question count, attempt number,
+   submitted time, raw_score, penalty, final_score, and status.
 
 
 Current and planned Flask functions
@@ -726,13 +985,16 @@ Authenticates student using username and password.
 Database tables used:
 
 - students
+- sessions
 
 Important behavior:
 
 - Validates that username and password are provided.
 - Fetches the student row by username.
 - Uses check_password_hash against students.password_hash.
-- Stores username, full_name, and email in Flask session.
+- Inserts a sessions row with session_token, expires_at, ip_address, and
+  user_agent.
+- Stores username, full_name, email, and db_session_token in Flask session.
 - Redirects successful login to /home.
 
 Demo relevance:
@@ -754,15 +1016,14 @@ Purpose:
 Logs the student out.
 
 Database tables used:
-None in current implementation.
+
+- sessions
 
 Important behavior:
 
+- Updates sessions.logged_out_at for the active db_session_token.
 - Clears Flask session.
 - Redirects to /login.
-
-Possible future improvement:
-If sessions table is fully used, this should also update sessions.logged_out_at.
 
 
 5. register()
@@ -829,8 +1090,7 @@ Expected future behavior:
 7. assessments()
 
 Status:
-Implemented for display.
-Submission is not implemented yet.
+Implemented for display and task submission.
 
 Route:
 /assessments
@@ -866,9 +1126,7 @@ Prepares the UI for demo steps 3, 4, and 8.
 
 Expected future behavior:
 
-- Enable answer selection.
-- Submit selected answers to a POST route.
-- Disable submission after 3 attempts.
+- Improve visual feedback after submission if needed.
 
 
 8. courses()
@@ -965,7 +1223,7 @@ Keeping old attempts is safer for audit/history.
 11. score()
 
 Status:
-Route exists, but page is not yet database-backed.
+Implemented and database-backed.
 
 Route:
 /score
@@ -977,20 +1235,19 @@ Purpose:
 Shows personal scores.
 
 Current database tables used:
-None in current implementation.
-
-Expected database tables:
 
 - students
 - courses
 - assessments
 - tasks
 - attempts
+- enrollment
+- submitted_answers
 
-Expected behavior:
+Current behavior:
 
 - Requires login.
-- Loads all attempts for the logged-in student.
+- Loads graded attempts for the logged-in student from currently enrolled courses.
 - Shows course, assessment, task, attempt_number, submitted_at, raw_score,
   final_score, late_penalty_applied, and status.
 - Should show every attempt, not only the best attempt.
@@ -1011,7 +1268,7 @@ Method:
 GET
 
 Purpose:
-Shows top students by assessment.
+Shows top students by overall course score.
 
 Current database tables used:
 None in current implementation.
@@ -1023,16 +1280,19 @@ Expected database tables:
 - assessments
 - tasks
 - attempts
+- enrollment
 
 Expected behavior:
 
-- Load leaderboard per assessment.
+- Load leaderboard per course.
+- Use a course dropdown, not an assessment dropdown.
 - For each student and task, use best final_score.
-- Aggregate best task scores per assessment.
+- Aggregate best task scores across all assessments in the course.
+- Exclude dropped courses by joining through enrollment.
 - Show top 5 students.
 
 Demo relevance:
-Supports demo step 7: show leaderboard for each assessment.
+Supports demo step 7: show leaderboard for each course.
 
 
 13. profile()
@@ -1242,13 +1502,13 @@ Demo relevance:
 Supports demo steps 3, 4, 5, and 8.
 
 
-19. grade_attempt(attempt_id)
+19. recalculate_attempt_score(attempt_id)
 
 Status:
-Planned helper or backend script function.
+Implemented helper in recalculate_scores.py.
 
 Purpose:
-Grade one attempt based on submitted answers.
+Recalculate one attempt based on stored submitted answers.
 
 Expected database tables:
 
@@ -1269,8 +1529,9 @@ Expected behavior:
 - Update attempts row.
 
 Design choice:
-This can be called immediately by submit_attempt().
-It can also be reused by a regrade script for the late penalty demo.
+submit_attempt() still grades immediately in one transaction for simplicity.
+recalculate_attempt_score() exists in recalculate_scores.py for the
+due-date-change demo and recomputes from the normalized answer records.
 
 
 20. grade_ungraded_attempts()
@@ -1298,10 +1559,16 @@ Demo relevance:
 Maps to the original requirement's backend auto-grading script.
 
 
-21. regrade_attempts_for_assessment(assessment_id)
+21. recalculate_scores()
 
 Status:
-Planned helper or backend script function.
+Implemented batch script in recalculate_scores.py.
+
+Command:
+python3 recalculate_scores.py
+
+Optional command:
+python3 recalculate_scores.py --assessment-id 1
 
 Purpose:
 Recalculate scores after the assessment due_date is changed in MySQL.
@@ -1316,10 +1583,13 @@ Expected database tables:
 
 Expected behavior:
 
-- Find all attempts for tasks under the assessment.
-- Recalculate raw_score from submitted answers.
+- Find all submitted/graded attempts for all students.
+- If --assessment-id is provided, only recalculate attempts under that
+  assessment.
+- Recalculate raw_score from submitted answers and current question keys.
 - Reapply late penalty using the current assessments.due_date.
-- Update attempts.final_score and late_penalty_applied.
+- Update submitted_answers.is_correct, submitted_answers.points_awarded,
+  attempts.raw_score, attempts.final_score, and attempts.late_penalty_applied.
 
 Demo relevance:
 Supports demo step 9.
@@ -1328,7 +1598,7 @@ Supports demo step 9.
 22. score()
 
 Status:
-Existing route, planned database-backed implementation.
+Implemented and database-backed.
 
 Route:
 /score
@@ -1359,7 +1629,7 @@ Expected behavior:
 23. leaderboard()
 
 Status:
-Existing route, planned database-backed implementation.
+Implemented and database-backed.
 
 Route:
 /leaderboard
@@ -1368,39 +1638,42 @@ Method:
 GET
 
 Purpose:
-Show top 5 students per assessment.
+Show top 5 students per course.
 
 Expected database tables:
 
 - students
+- courses
 - assessments
 - tasks
 - attempts
+- enrollment
 
 Expected behavior:
 
 - For each student/task, take MAX(final_score).
-- Aggregate best task scores per assessment.
-- Rank students.
+- Aggregate best task scores across all assessments in the selected course.
+- Rank students by course_score.
+- Dropdown should list courses.
+- Exclude dropped courses by joining through enrollment.
+- Calculate mean, median, and mode from enrolled students' course percentages.
+- Generate a matplotlib score-range distribution chart for each course.
 - Return top 5.
 
 Important project rule:
-For the MCQ adaptation, leaderboard uses best attempt per task.
+For the MCQ adaptation, leaderboard uses best attempt per task, then sums those
+best task scores at course level.
+Mean, median, mode, and the chart are analytics on the resulting course-level
+percentages, not separate stored columns.
 
 
-24. export_scores()
+24. export_score()
 
 Status:
-Planned script or route.
-
-Possible route:
-/export/scores
-
-Possible script:
-export_scores.py
+Implemented route in flask_app.py.
 
 Purpose:
-Export all scores into CSV.
+Export the logged-in student's visible scores into CSV.
 
 Expected database tables:
 
@@ -1412,17 +1685,15 @@ Expected database tables:
 
 Expected output columns:
 
-- username
-- full_name
 - course_code
-- course_name
 - assessment_title
 - task_title
+- questions
 - attempt_number
 - submitted_at
 - raw_score
+- penalty
 - final_score
-- late_penalty_applied
 - status
 
 Demo relevance:
@@ -1454,25 +1725,31 @@ Prevents demo failure caused by bad seed data.
 26. create_demo_users()
 
 Status:
-Planned seed/setup function or SQL seed section.
+Implemented in seed.sql and reset_db.sql as SQL seed data.
 
 Purpose:
 Create predictable demo users.
 
-Expected demo users:
+Demo users:
 
-- demo_full
-- demo_partial
-- demo_late
+- adam01
+- sarah02
+- danial03
+- hannah04
+- rayan05
+- zara06
+- zain07
 
-Expected behavior:
+Implemented behavior:
 
 - Insert users with hashed passwords.
 - Enroll users into courses.
-- Optionally create sample attempts for score and leaderboard demo.
+- Enroll every tester account in CS101 for course leaderboard demo.
+- Create sample attempts for score and leaderboard demo.
+- Create submitted_answers rows so each seeded attempt has 5 answer records.
 
 Note:
-This may be better done in seed.sql than in Flask.
+This is intentionally done in SQL seed files instead of Flask application code.
 
 
 Demo checklist
@@ -1488,6 +1765,21 @@ Preparation checklist:
   SELECT COUNT(*) FROM assessments;
   SELECT COUNT(*) FROM tasks;
   SELECT COUNT(*) FROM questions;
+  SELECT COUNT(*) FROM students;
+  SELECT COUNT(*) FROM enrollment;
+  SELECT COUNT(*) FROM attempts;
+  SELECT COUNT(*) FROM submitted_answers;
+
+- Confirm every tester is enrolled in CS101:
+  SELECT s.username
+  FROM students s
+  JOIN enrollment e ON e.student_id = s.id
+  JOIN courses c ON c.course_id = e.course_id
+  WHERE c.course_code = 'CS101'
+  ORDER BY s.username;
+
+Expected result:
+adam01, danial03, hannah04, rayan05, sarah02, zain07, zara06.
 
 - Confirm every task has exactly 5 questions:
   SELECT t.task_id, t.title, COUNT(q.question_id) AS question_count
@@ -1512,7 +1804,7 @@ Demo step checklist:
 - Expected: redirect to /home.
 
 Status:
-Implemented, but seed data must include demo users or user must register first.
+Implemented. Seed data includes demo users.
 
 
 2. Change password
@@ -1557,7 +1849,7 @@ Implemented for display.
 - Expected: raw_score = 5, final_score = 5.
 
 Status:
-Planned. Submission and grading route still needed.
+Implemented.
 
 
 6. Submit partial-mark MCQ attempt
@@ -1568,7 +1860,7 @@ Planned. Submission and grading route still needed.
 - Expected: partial raw_score and final_score.
 
 Status:
-Planned.
+Implemented.
 
 
 7. Show all marks
@@ -1577,16 +1869,21 @@ Planned.
 - Expected: all attempts are shown.
 
 Status:
-Planned. Current score page is not fully database-backed.
+Implemented and database-backed for currently enrolled courses.
 
 
 8. Show leaderboard
 
 - Open /leaderboard.
-- Expected: top 5 students by best attempt per task for each assessment.
+- Expected: course dropdown appears.
+- Expected: top 5 students are ranked by overall course score.
+- Expected: score is based on each student's best attempt per task across all
+  assessments in that course.
+- Expected: selected course panel shows mean, median, mode, and a matplotlib
+  chart with score ranges on the x-axis and student counts on the y-axis.
 
 Status:
-Planned. Current leaderboard page is not fully database-backed.
+Implemented and database-backed.
 
 
 9. Resubmit to improve score
@@ -1596,90 +1893,90 @@ Planned. Current leaderboard page is not fully database-backed.
 - Expected: new attempt row appears, best score improves.
 
 Status:
-Planned.
+Implemented for task attempts. The course leaderboard uses the best graded
+attempt per task.
 
 
 10. Late penalty
 
 - Change assessment due_date in MySQL to before submitted_at.
-- Regrade or recalculate.
+- Example MySQL statement:
+
+  USE TCX2003_Project;
+
+  UPDATE assessments
+  SET due_date = '2026-07-11 23:59:59'
+  WHERE title = 'CS101 Assessment 1: Programming Basics';
+
+- Run python3 recalculate_scores.py.
 - Expected: final_score is raw_score * 0.9 and late_penalty_applied = TRUE.
 
 Status:
-Planned.
+Implemented through recalculate_scores.py.
 
 
 11. CSV export
 
-- Run export script or endpoint.
-- Expected: CSV contains all scores.
+- Open /score and click the export icon.
+- Confirm Export CSV.
+- Expected: CSV contains the logged-in student's visible score records.
 
 Status:
-Planned.
+Implemented through /score/export.
 
 
 High-priority remaining work
 ----------------------------
 
-1. Add demo users and enrollments to seed.sql.
+1. Keep leaderboard demo data easy to explain.
 
-Why:
-A full-mark demo should start from a reset database and work immediately.
+Required behavior:
 
+- use each student's best attempt per task
+- aggregate task scores across all assessments in each course
+- rank students by course_score
+- use a course dropdown
+- exclude dropped courses by joining through enrollment
 
-2. Implement task attempt submission.
-
-Required backend behavior:
-
-- block if attempt_count >= 3
-- insert attempts row
-- insert five submitted_answers rows
-- compare chosen_option with correct_option
-- calculate raw_score
-- apply late penalty
-- update final_score and status
+Status:
+Implemented. Before demo, verify CS101 has enough seeded attempts to show a
+meaningful top 5.
 
 
-3. Make /score database-backed.
+2. Validate late-score recalculation with a live MySQL reset.
 
-Required display:
+Required behavior:
 
-- all attempts for logged-in student
-- course
-- assessment
-- task
-- attempt_number
-- raw_score
-- final_score
-- late_penalty_applied
-- submitted_at
+- after due_date is changed in MySQL, recompute final_score if needed
+- set late_penalty_applied correctly
+- keep raw_score unchanged
+
+Status:
+Implemented through recalculate_scores.py. Still needs manual verification against
+local MySQL after reset_db.sql is loaded.
 
 
-4. Make /leaderboard database-backed.
-
-Required rule:
-
-- use best attempt per student per task
-- aggregate by assessment
-- show top 5
-
-
-5. Add CSV export.
+3. Keep CSV score export aligned with the score page.
 
 Required output:
 
-- student
-- course
-- assessment
-- task
+- course_code
+- assessment_title
+- task_title
+- questions
 - attempt_number
-- raw_score
-- final_score
-- late_penalty_applied
 - submitted_at
+- raw_score
+- penalty
+- final_score
+- status
+
+Status:
+Implemented through /score/export for the logged-in student's visible score
+records.
 
 
-6. Prepare final demo runbook.
+4. Prepare final demo runbook.
 
 Purpose:
 Make the 10-minute demo predictable and easy to execute.
@@ -1717,4 +2014,5 @@ Late penalty:
 Calculated by comparing attempts.submitted_at with assessments.due_date.
 
 Best attempt leaderboard:
-For the MCQ adaptation, leaderboard uses each student's best attempt per task.
+For the MCQ adaptation, leaderboard uses each student's best attempt per task,
+then sums those best task scores across the selected course.

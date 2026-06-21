@@ -26,12 +26,8 @@ CREATE TABLE student_courses (
     course_id INT NOT NULL,  -- Reference courses table 
     enrollment_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE, -- should this be restrict 
-<<<<<<< Updated upstream
     FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE, -- should this be restrict instead?
     UNIQUE KEY unique_student_course (student_id, course_id)
-=======
-    FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE RESTRICT    
->>>>>>> Stashed changes
 );
 
 CREATE TABLE sessions (
@@ -94,13 +90,7 @@ CREATE TABLE attempts (
     submitted_at DATETIME DEFAULT NULL, -- For this NULL it means the attempt is still in progress 
     score INT DEFAULT 0, 
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE, 
-<<<<<<< Updated upstream
     FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE 
-=======
-    FOREIGN KEY (task_id) REFERENCES tasks(task_id) ON DELETE CASCADE,
-    UNIQUE KEY unique_student_task_attempt (student_id, task_id, attempt_number) -- To prevent duplicate attempt numbers for the same student and task
-    CONSTRAINT check_attempt_number CHECK (attempt_number BETWEEN 1 AND 3) -- Added this as safety in case Python defaults to 1 in FLASK when calculating attempt_number
->>>>>>> Stashed changes
 ); 
 
 CREATE TABLE submitted_answers (

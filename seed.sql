@@ -138,3 +138,390 @@ VALUES
 (@cs201_t2_id, 'What is a function?', 'A relation where each input has exactly one output', 'A relation with no pairs', 'Any table with a primary key', 'Any loop body', 'A', 1),
 (@cs201_t2_id, 'What is an ordered pair?', 'A pair where position matters', 'A pair sorted alphabetically', 'A pair with only numbers', 'A pair of passwords', 'A', 1),
 (@cs201_t2_id, 'What is the domain of a function?', 'The set of valid inputs', 'The set of CSS files', 'The current webpage', 'The SQL server port', 'A', 1);
+
+-- Demo login accounts. Password for all accounts: Tester123!
+INSERT INTO students
+(username, full_name, email, password_hash)
+VALUES
+('adam01', 'Adam tester', 'adam01@gmail.com', 'pbkdf2:sha256:260000$GpbnRPAATQWH3uh4$e2f4e0b602555ef54900cb414538ad892cc3707bc35601921addc6ea6b4843e5'),
+('sarah02', 'Sarah tester', 'sarah02@gmail.com', 'pbkdf2:sha256:260000$yMGPeD9Fjpfg1y55$9462b25c0b83e09a91c035bc1c9bc8c938910e00a741f8951ebfebefb5845d8a'),
+('danial03', 'Danial tester', 'danial03@gmail.com', 'pbkdf2:sha256:260000$NUSLrlgjOq1r9dFM$813ab43280ef28baa445bc6bcad2be04f2337207a869f9e7f17e15ae107a106c'),
+('hannah04', 'Hannah tester', 'hannah04@gmail.com', 'pbkdf2:sha256:260000$cbWUX0rhhQhi3k7s$9d5921e18806b1ae762a0d495c1a4d3a4e8c6392b8df9face3dcc19a54184a11'),
+('rayan05', 'Rayan tester', 'rayan05@gmail.com', 'pbkdf2:sha256:260000$dSgL49RMCre80Aod$ed69e6ffec4579c7c3f86d80258e87c5319f4afb3bc7d134b6fc11707213b13e'),
+('zara06', 'Zara tester', 'zara06@gmail.com', 'pbkdf2:sha256:260000$HhVF8h3J5hpnPDkq$cccd0ecff9ce418a7ce806c38567392068983ef07bf87e734dad2c25b22e793f'),
+('zain07', 'Zain tester', 'zain07@gmail.com', 'pbkdf2:sha256:260000$g5I526G9I0i2fq2X$34c2706a8dbd6c0672f3f5cc9e7eea1cea454bce29ba212db2df27afa1ee6cf0');
+
+SET @adam_id = (SELECT id FROM students WHERE username = 'adam01');
+SET @sarah_id = (SELECT id FROM students WHERE username = 'sarah02');
+SET @danial_id = (SELECT id FROM students WHERE username = 'danial03');
+SET @hannah_id = (SELECT id FROM students WHERE username = 'hannah04');
+SET @rayan_id = (SELECT id FROM students WHERE username = 'rayan05');
+SET @zara_id = (SELECT id FROM students WHERE username = 'zara06');
+SET @zain_id = (SELECT id FROM students WHERE username = 'zain07');
+
+INSERT INTO enrollment
+(student_id, course_id)
+VALUES
+(@adam_id, @cs101_id),
+(@adam_id, @cs102_id),
+(@adam_id, @cs201_id),
+(@sarah_id, @cs101_id),
+(@sarah_id, @cs102_id),
+(@danial_id, @cs101_id),
+(@danial_id, @cs102_id),
+(@hannah_id, @cs101_id),
+(@hannah_id, @cs201_id),
+(@rayan_id, @cs101_id),
+(@zara_id, @cs101_id),
+(@zain_id, @cs101_id);
+
+-- Demo attempt scenarios:
+-- Adam: resubmits and improves to full marks.
+-- Sarah: has full and partial attempts.
+-- Danial: has late full-mark raw submissions with penalty applied.
+-- Hannah: has partial attempts and can retry.
+-- Rayan: has used all 3 attempts on one task.
+-- Zara and Zain: add more CS101 leaderboard variety.
+INSERT INTO attempts
+(student_id, task_id, attempt_number, started_at, submitted_at, raw_score, final_score, late_penalty_applied, status)
+VALUES
+(@adam_id, @cs102_t1_id, 1, '2026-07-10 09:00:00', '2026-07-10 09:10:00', 2.00, 2.00, FALSE, 'graded');
+SET @adam_cs102_t1_a1 = LAST_INSERT_ID();
+
+INSERT INTO submitted_answers
+(attempt_id, question_id, chosen_option, is_correct, points_awarded)
+SELECT
+    @adam_cs102_t1_a1,
+    q.question_id,
+    CASE
+        WHEN q.question_text IN (
+            'What is a relation commonly represented as in a database?',
+            'What does a primary key do?'
+        ) THEN q.correct_option
+        WHEN q.correct_option = 'A' THEN 'B'
+        ELSE 'A'
+    END,
+    q.question_text IN (
+        'What is a relation commonly represented as in a database?',
+        'What does a primary key do?'
+    ),
+    CASE
+        WHEN q.question_text IN (
+            'What is a relation commonly represented as in a database?',
+            'What does a primary key do?'
+        ) THEN q.points
+        ELSE 0
+    END
+FROM questions q
+WHERE q.task_id = @cs102_t1_id
+ORDER BY q.question_id;
+
+INSERT INTO attempts
+(student_id, task_id, attempt_number, started_at, submitted_at, raw_score, final_score, late_penalty_applied, status)
+VALUES
+(@adam_id, @cs102_t1_id, 2, '2026-07-11 09:00:00', '2026-07-11 09:08:00', 5.00, 5.00, FALSE, 'graded');
+SET @adam_cs102_t1_a2 = LAST_INSERT_ID();
+
+INSERT INTO submitted_answers
+(attempt_id, question_id, chosen_option, is_correct, points_awarded)
+SELECT @adam_cs102_t1_a2, question_id, correct_option, TRUE, points
+FROM questions
+WHERE task_id = @cs102_t1_id
+ORDER BY question_id;
+
+INSERT INTO attempts
+(student_id, task_id, attempt_number, started_at, submitted_at, raw_score, final_score, late_penalty_applied, status)
+VALUES
+(@adam_id, @cs101_t1_id, 1, '2026-07-12 10:00:00', '2026-07-12 10:06:00', 5.00, 5.00, FALSE, 'graded');
+SET @adam_cs101_t1_a1 = LAST_INSERT_ID();
+
+INSERT INTO submitted_answers
+(attempt_id, question_id, chosen_option, is_correct, points_awarded)
+SELECT @adam_cs101_t1_a1, question_id, correct_option, TRUE, points
+FROM questions
+WHERE task_id = @cs101_t1_id
+ORDER BY question_id;
+
+INSERT INTO attempts
+(student_id, task_id, attempt_number, started_at, submitted_at, raw_score, final_score, late_penalty_applied, status)
+VALUES
+(@sarah_id, @cs101_t1_id, 1, '2026-07-13 10:00:00', '2026-07-13 10:05:00', 5.00, 5.00, FALSE, 'graded');
+SET @sarah_cs101_t1_a1 = LAST_INSERT_ID();
+
+INSERT INTO submitted_answers
+(attempt_id, question_id, chosen_option, is_correct, points_awarded)
+SELECT @sarah_cs101_t1_a1, question_id, correct_option, TRUE, points
+FROM questions
+WHERE task_id = @cs101_t1_id
+ORDER BY question_id;
+
+INSERT INTO attempts
+(student_id, task_id, attempt_number, started_at, submitted_at, raw_score, final_score, late_penalty_applied, status)
+VALUES
+(@sarah_id, @cs102_t2_id, 1, '2026-07-14 11:00:00', '2026-07-14 11:09:00', 4.00, 4.00, FALSE, 'graded');
+SET @sarah_cs102_t2_a1 = LAST_INSERT_ID();
+
+INSERT INTO submitted_answers
+(attempt_id, question_id, chosen_option, is_correct, points_awarded)
+SELECT
+    @sarah_cs102_t2_a1,
+    q.question_id,
+    CASE
+        WHEN q.question_text <> 'Which statement retrieves data from a table?' THEN q.correct_option
+        WHEN q.correct_option = 'A' THEN 'B'
+        ELSE 'A'
+    END,
+    q.question_text <> 'Which statement retrieves data from a table?',
+    CASE WHEN q.question_text <> 'Which statement retrieves data from a table?' THEN q.points ELSE 0 END
+FROM questions q
+WHERE q.task_id = @cs102_t2_id
+ORDER BY q.question_id;
+
+INSERT INTO attempts
+(student_id, task_id, attempt_number, started_at, submitted_at, raw_score, final_score, late_penalty_applied, status)
+VALUES
+(@danial_id, @cs102_t2_id, 1, '2026-07-19 09:00:00', '2026-07-19 09:07:00', 5.00, 4.50, TRUE, 'graded');
+SET @danial_cs102_t2_a1 = LAST_INSERT_ID();
+
+INSERT INTO submitted_answers
+(attempt_id, question_id, chosen_option, is_correct, points_awarded)
+SELECT @danial_cs102_t2_a1, question_id, correct_option, TRUE, points
+FROM questions
+WHERE task_id = @cs102_t2_id
+ORDER BY question_id;
+
+INSERT INTO attempts
+(student_id, task_id, attempt_number, started_at, submitted_at, raw_score, final_score, late_penalty_applied, status)
+VALUES
+(@hannah_id, @cs201_t1_id, 1, '2026-07-16 14:00:00', '2026-07-16 14:08:00', 3.00, 3.00, FALSE, 'graded');
+SET @hannah_cs201_t1_a1 = LAST_INSERT_ID();
+
+INSERT INTO submitted_answers
+(attempt_id, question_id, chosen_option, is_correct, points_awarded)
+SELECT
+    @hannah_cs201_t1_a1,
+    q.question_id,
+    CASE
+        WHEN q.question_text IN (
+            'Which value can a proposition have?',
+            'What does set intersection return?',
+            'What does set union return?'
+        ) THEN q.correct_option
+        WHEN q.correct_option = 'A' THEN 'B'
+        ELSE 'A'
+    END,
+    q.question_text IN (
+        'Which value can a proposition have?',
+        'What does set intersection return?',
+        'What does set union return?'
+    ),
+    CASE
+        WHEN q.question_text IN (
+            'Which value can a proposition have?',
+            'What does set intersection return?',
+            'What does set union return?'
+        ) THEN q.points
+        ELSE 0
+    END
+FROM questions q
+WHERE q.task_id = @cs201_t1_id
+ORDER BY q.question_id;
+
+INSERT INTO attempts
+(student_id, task_id, attempt_number, started_at, submitted_at, raw_score, final_score, late_penalty_applied, status)
+VALUES
+(@rayan_id, @cs101_t2_id, 1, '2026-07-12 15:00:00', '2026-07-12 15:06:00', 2.00, 2.00, FALSE, 'graded');
+SET @rayan_cs101_t2_a1 = LAST_INSERT_ID();
+
+INSERT INTO submitted_answers
+(attempt_id, question_id, chosen_option, is_correct, points_awarded)
+SELECT
+    @rayan_cs101_t2_a1,
+    q.question_id,
+    CASE
+        WHEN q.question_text IN (
+            'Which keyword starts a basic conditional branch?',
+            'What does an else branch represent?'
+        ) THEN q.correct_option
+        WHEN q.correct_option = 'A' THEN 'B'
+        ELSE 'A'
+    END,
+    q.question_text IN (
+        'Which keyword starts a basic conditional branch?',
+        'What does an else branch represent?'
+    ),
+    CASE
+        WHEN q.question_text IN (
+            'Which keyword starts a basic conditional branch?',
+            'What does an else branch represent?'
+        ) THEN q.points
+        ELSE 0
+    END
+FROM questions q
+WHERE q.task_id = @cs101_t2_id
+ORDER BY q.question_id;
+
+INSERT INTO attempts
+(student_id, task_id, attempt_number, started_at, submitted_at, raw_score, final_score, late_penalty_applied, status)
+VALUES
+(@danial_id, @cs101_t1_id, 1, '2026-07-16 09:00:00', '2026-07-16 09:07:00', 5.00, 4.50, TRUE, 'graded');
+SET @danial_cs101_t1_a1 = LAST_INSERT_ID();
+
+INSERT INTO submitted_answers
+(attempt_id, question_id, chosen_option, is_correct, points_awarded)
+SELECT @danial_cs101_t1_a1, question_id, correct_option, TRUE, points
+FROM questions
+WHERE task_id = @cs101_t1_id
+ORDER BY question_id;
+
+INSERT INTO attempts
+(student_id, task_id, attempt_number, started_at, submitted_at, raw_score, final_score, late_penalty_applied, status)
+VALUES
+(@hannah_id, @cs101_t3_id, 1, '2026-07-17 14:00:00', '2026-07-17 14:08:00', 3.00, 3.00, FALSE, 'graded');
+SET @hannah_cs101_t3_a1 = LAST_INSERT_ID();
+
+INSERT INTO submitted_answers
+(attempt_id, question_id, chosen_option, is_correct, points_awarded)
+SELECT
+    @hannah_cs101_t3_a1,
+    q.question_id,
+    CASE
+        WHEN q.question_text IN (
+            'Which loop is commonly used when the number of iterations is known?',
+            'What can cause an infinite loop?',
+            'Which statement usually exits a loop early?'
+        ) THEN q.correct_option
+        WHEN q.correct_option = 'A' THEN 'B'
+        ELSE 'A'
+    END,
+    q.question_text IN (
+        'Which loop is commonly used when the number of iterations is known?',
+        'What can cause an infinite loop?',
+        'Which statement usually exits a loop early?'
+    ),
+    CASE
+        WHEN q.question_text IN (
+            'Which loop is commonly used when the number of iterations is known?',
+            'What can cause an infinite loop?',
+            'Which statement usually exits a loop early?'
+        ) THEN q.points
+        ELSE 0
+    END
+FROM questions q
+WHERE q.task_id = @cs101_t3_id
+ORDER BY q.question_id;
+
+INSERT INTO attempts
+(student_id, task_id, attempt_number, started_at, submitted_at, raw_score, final_score, late_penalty_applied, status)
+VALUES
+(@zara_id, @cs101_t4_id, 1, '2026-07-18 13:00:00', '2026-07-18 13:09:00', 4.00, 4.00, FALSE, 'graded');
+SET @zara_cs101_t4_a1 = LAST_INSERT_ID();
+
+INSERT INTO submitted_answers
+(attempt_id, question_id, chosen_option, is_correct, points_awarded)
+SELECT
+    @zara_cs101_t4_a1,
+    q.question_id,
+    CASE
+        WHEN q.question_text <> 'Which function result is best described as reusable output?' THEN q.correct_option
+        WHEN q.correct_option = 'A' THEN 'B'
+        ELSE 'A'
+    END,
+    q.question_text <> 'Which function result is best described as reusable output?',
+    CASE WHEN q.question_text <> 'Which function result is best described as reusable output?' THEN q.points ELSE 0 END
+FROM questions q
+WHERE q.task_id = @cs101_t4_id
+ORDER BY q.question_id;
+
+INSERT INTO attempts
+(student_id, task_id, attempt_number, started_at, submitted_at, raw_score, final_score, late_penalty_applied, status)
+VALUES
+(@zain_id, @cs101_t1_id, 1, '2026-07-14 16:00:00', '2026-07-14 16:07:00', 2.00, 2.00, FALSE, 'graded');
+SET @zain_cs101_t1_a1 = LAST_INSERT_ID();
+
+INSERT INTO submitted_answers
+(attempt_id, question_id, chosen_option, is_correct, points_awarded)
+SELECT
+    @zain_cs101_t1_a1,
+    q.question_id,
+    CASE
+        WHEN q.question_text IN (
+            'Which data type is most appropriate for storing a whole number?',
+            'Which value is a string literal?'
+        ) THEN q.correct_option
+        WHEN q.correct_option = 'A' THEN 'B'
+        ELSE 'A'
+    END,
+    q.question_text IN (
+        'Which data type is most appropriate for storing a whole number?',
+        'Which value is a string literal?'
+    ),
+    CASE
+        WHEN q.question_text IN (
+            'Which data type is most appropriate for storing a whole number?',
+            'Which value is a string literal?'
+        ) THEN q.points
+        ELSE 0
+    END
+FROM questions q
+WHERE q.task_id = @cs101_t1_id
+ORDER BY q.question_id;
+
+INSERT INTO attempts
+(student_id, task_id, attempt_number, started_at, submitted_at, raw_score, final_score, late_penalty_applied, status)
+VALUES
+(@rayan_id, @cs101_t2_id, 2, '2026-07-13 15:00:00', '2026-07-13 15:07:00', 3.00, 3.00, FALSE, 'graded');
+SET @rayan_cs101_t2_a2 = LAST_INSERT_ID();
+
+INSERT INTO submitted_answers
+(attempt_id, question_id, chosen_option, is_correct, points_awarded)
+SELECT
+    @rayan_cs101_t2_a2,
+    q.question_id,
+    CASE
+        WHEN q.question_text IN (
+            'Which keyword starts a basic conditional branch?',
+            'What does an else branch represent?',
+            'Which expression checks whether x equals 10 in many programming languages?'
+        ) THEN q.correct_option
+        WHEN q.correct_option = 'A' THEN 'B'
+        ELSE 'A'
+    END,
+    q.question_text IN (
+        'Which keyword starts a basic conditional branch?',
+        'What does an else branch represent?',
+        'Which expression checks whether x equals 10 in many programming languages?'
+    ),
+    CASE
+        WHEN q.question_text IN (
+            'Which keyword starts a basic conditional branch?',
+            'What does an else branch represent?',
+            'Which expression checks whether x equals 10 in many programming languages?'
+        ) THEN q.points
+        ELSE 0
+    END
+FROM questions q
+WHERE q.task_id = @cs101_t2_id
+ORDER BY q.question_id;
+
+INSERT INTO attempts
+(student_id, task_id, attempt_number, started_at, submitted_at, raw_score, final_score, late_penalty_applied, status)
+VALUES
+(@rayan_id, @cs101_t2_id, 3, '2026-07-14 15:00:00', '2026-07-14 15:09:00', 4.00, 4.00, FALSE, 'graded');
+SET @rayan_cs101_t2_a3 = LAST_INSERT_ID();
+
+INSERT INTO submitted_answers
+(attempt_id, question_id, chosen_option, is_correct, points_awarded)
+SELECT
+    @rayan_cs101_t2_a3,
+    q.question_id,
+    CASE
+        WHEN q.question_text <> 'What should conditional expressions evaluate to?' THEN q.correct_option
+        WHEN q.correct_option = 'A' THEN 'B'
+        ELSE 'A'
+    END,
+    q.question_text <> 'What should conditional expressions evaluate to?',
+    CASE WHEN q.question_text <> 'What should conditional expressions evaluate to?' THEN q.points ELSE 0 END
+FROM questions q
+WHERE q.task_id = @cs101_t2_id
+ORDER BY q.question_id;
