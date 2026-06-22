@@ -506,6 +506,55 @@ input:disabled {
     grid-column: span 2;
 }
 
+.course-total-panel {
+    margin-bottom: 24px;
+}
+
+.course-total-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.course-total-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px;
+}
+
+.course-total-card h3 {
+    margin: 10px 0 4px;
+    font-size: 1rem;
+}
+
+.course-total-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+}
+
+.course-total-score {
+    display: grid;
+    justify-items: end;
+    gap: 4px;
+    color: var(--primary-dark);
+    white-space: nowrap;
+}
+
+.course-total-score strong {
+    font-size: 1.05rem;
+}
+
+.course-total-score span {
+    color: var(--muted);
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
 .score-header {
     margin-bottom: 12px;
 }
@@ -760,6 +809,7 @@ input:disabled {
     .panel-heading,
     .score-header,
     .leader-row,
+    .course-total-card,
     .course-card {
         align-items: flex-start;
         flex-direction: column;
@@ -776,7 +826,8 @@ input:disabled {
     .score-grid,
     .leaderboard-layout,
     .profile-layout,
-    .course-grid {
+    .course-grid,
+    .course-total-grid {
         grid-template-columns: 1fr;
     }
 
@@ -787,5 +838,9 @@ input:disabled {
 
     .score-card-wide {
         grid-column: auto;
+    }
+
+    .course-total-score {
+        justify-items: start;
     }
 }

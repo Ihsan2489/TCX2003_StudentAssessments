@@ -645,6 +645,7 @@ def score():
     cursor = None
     message = session.pop('score_message', '')
     summary = []
+    course_totals = []
     submissions = []
 
     try:
@@ -713,6 +714,7 @@ def score():
         ]
 
         submissions = student_submission_table(cursor, student_id)
+        course_totals = student_course_score_totals(cursor, student_id)
 
     except Error as error:
         message = f'Database error: {error}'
@@ -725,6 +727,7 @@ def score():
     return render_template(
         'score.html',
         summary=summary,
+        course_totals=course_totals,
         submissions=submissions,
         message=message
     )
@@ -1102,6 +1105,58 @@ def student_submission_table(cursor, student_id):
         })
 
     return submissions
+
+
+def student_course_score_totals(cursor, student_id):
+    cursor.execute(
+        '''
+        SELECT
+            c.course_code,
+            c.course_name,
+            COUNT(DISTINCT t.task_id) AS total_tasks,
+            COUNT(DISTINCT CASE
+                WHEN best_task.best_score IS NOT NULL THEN t.task_id
+            END) AS tasks_completed,
+            COALESCE(SUM(best_task.best_score), 0) AS course_score,
+            COALESCE(SUM(t.max_score), 0) AS course_max_score
+        FROM enrollment e
+        JOIN courses c ON c.course_id = e.course_id
+        JOIN assessments a ON a.course_id = c.course_id
+        JOIN tasks t ON t.assessment_id = a.assessment_id
+        LEFT JOIN (
+            SELECT
+                task_id,
+                MAX(final_score) AS best_score
+            FROM attempts
+            WHERE student_id = %s
+            AND status = 'graded'
+            GROUP BY task_id
+        ) best_task ON best_task.task_id = t.task_id
+        WHERE e.student_id = %s
+        GROUP BY c.course_id, c.course_code, c.course_name
+        ORDER BY c.course_code
+        ''',
+        (student_id, student_id)
+    )
+    rows = cursor.fetchall()
+    course_totals = []
+
+    for row in rows:
+        course_score = float(row['course_score'])
+        course_max_score = float(row['course_max_score'])
+        percentage = (course_score / course_max_score * 100) if course_max_score else 0
+
+        course_totals.append({
+            'course_code': row['course_code'],
+            'course_name': row['course_name'],
+            'tasks_completed': row['tasks_completed'],
+            'total_tasks': row['total_tasks'],
+            'course_score': f'{course_score:.2f}',
+            'course_max_score': f'{course_max_score:.2f}',
+            'percentage': f'{percentage:.2f}'
+        })
+
+    return course_totals
 
 
 def format_percentage(value):
