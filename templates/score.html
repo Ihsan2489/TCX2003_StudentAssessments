@@ -43,6 +43,29 @@
         {% endfor %}
     </div>
 
+    {% if course_totals %}
+    <section class="panel course-total-panel">
+        <div class="panel-heading">
+            <h2>Course totals</h2>
+        </div>
+        <div class="course-total-grid">
+            {% for course in course_totals %}
+            <article class="course-total-card">
+                <div>
+                    <span class="badge">{{ course.course_code }}</span>
+                    <h3>{{ course.course_name }}</h3>
+                    <p>{{ course.tasks_completed }} / {{ course.total_tasks }} tasks completed</p>
+                </div>
+                <div class="course-total-score">
+                    <strong>{{ course.course_score }} / {{ course.course_max_score }}</strong>
+                    <span>{{ course.percentage }}%</span>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
     {% if submissions %}
     <table class="score-table" aria-label="Submission scores">
         <thead>

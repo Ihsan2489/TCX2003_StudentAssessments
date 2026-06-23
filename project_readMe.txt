@@ -865,7 +865,8 @@ Current page:
 
 1. Student opens /score.
 2. Flask loads graded attempts for that student from currently enrolled courses.
-3. Page shows course, assessment, task, attempt number, raw_score, final_score,
+3. Page shows course totals using the best graded attempt per task.
+4. Page shows course, assessment, task, attempt number, raw_score, final_score,
    late penalty status, and submitted_at.
 
 
@@ -1622,6 +1623,7 @@ Expected behavior:
 - Require login.
 - Query attempts for the current student.
 - Join to tasks, assessments, and courses.
+- Calculate per-course totals using each task's best graded attempt.
 - Show one row per attempt.
 - Include attempt_number, submitted_at, raw_score, final_score, penalty, status.
 
