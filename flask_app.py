@@ -95,7 +95,7 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if session.get('username') and request.method == 'GET':
-        return redirect(url_for('home'))
+        return redirect(url_for('courses'))
 
     if request.method == 'POST':
         # Get form data
@@ -123,7 +123,7 @@ def login():
                 session['full_name'] = user.get('full_name') or user['username']
                 session['email'] = user.get('email', '')
                 session['db_session_token'] = db_session_token
-                return redirect(url_for('home'))
+                return redirect(url_for('courses'))
             else:
                 message = 'Invalid username or password.'
                 return render_template('login.html', message=message)

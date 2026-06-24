@@ -793,7 +793,7 @@ Flow 2: Login
 4. Flask checks submitted password against students.password_hash.
 5. If valid, Flask inserts a row into sessions for audit tracking.
 6. Flask stores username, full_name, email, and db_session_token in session.
-7. Student is redirected to /home.
+7. Student is redirected to /courses.
 
 
 Flow 3: Logout
@@ -996,7 +996,7 @@ Important behavior:
 - Inserts a sessions row with session_token, expires_at, ip_address, and
   user_agent.
 - Stores username, full_name, email, and db_session_token in Flask session.
-- Redirects successful login to /home.
+- Redirects successful login to /courses.
 
 Demo relevance:
 Supports demo step 1: student should be able to login.
@@ -1803,7 +1803,7 @@ Demo step checklist:
 
 - Open /login.
 - Log in with a demo student.
-- Expected: redirect to /home.
+- Expected: redirect to /courses.
 
 Status:
 Implemented. Seed data includes demo users.
@@ -1907,7 +1907,7 @@ attempt per task.
   USE TCX2003_Project;
 
   UPDATE assessments
-  SET due_date = '2026-07-11 23:59:59'
+  SET due_date = '2026-06-21 23:59:59'
   WHERE title = 'CS101 Assessment 1: Programming Basics';
 
 - Run python3 recalculate_scores.py.
