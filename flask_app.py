@@ -192,18 +192,6 @@ def register():
     return render_template('register.html', message=message)
 
 
-@app.route('/home')
-def home():
-    username = session.get('username')
-    if not username:
-        return redirect(url_for('login'))
-    user = {
-        'username': username,
-        'full_name': session.get('full_name', username)
-    }
-    return render_template('home.html', user=user)
-
-
 @app.route('/assessments')
 def assessments():
     username = session.get('username')

@@ -9,6 +9,12 @@ This project is a Flask + MySQL student assessment system.
 The original TCX2003 requirement describes SQL submission and SQL auto-grading.
 The professor-approved adaptation for this project is MCQ auto-grading.
 
+Deployment scope:
+This project is configured for a local laptop demo. It is not configured for
+PythonAnywhere or production deployment. The Flask debug setting and local
+MySQL root db_config in flask_app.py are intentional for the local demo
+environment.
+
 The project still needs to demonstrate the original intent:
 
 - secure student login with hashed passwords
@@ -944,6 +950,7 @@ Important behavior:
 
 - Keeps database connection details in one place.
 - Should be used by every route or helper that talks to MySQL.
+- Current db_config is for the local laptop demo database.
 
 
 2. index()
@@ -1061,7 +1068,8 @@ Useful for setup, but a full demo should ideally use seeded demo accounts.
 6. home()
 
 Status:
-Implemented, but mostly display/static.
+Inactive route. The template is kept in templates/home.html, but /home is not
+registered in Flask.
 
 Route:
 /home
@@ -1070,15 +1078,15 @@ Method:
 GET
 
 Purpose:
-Shows the logged-in dashboard.
+Previously showed the logged-in dashboard. Not used in the current demo flow.
 
 Database tables used:
 None in current implementation.
 
 Important behavior:
 
-- Requires login.
-- Displays username/full_name from session.
+- Manual visits to /home should not render the old static dashboard.
+- The logged-in default page is /courses.
 
 Expected future behavior:
 

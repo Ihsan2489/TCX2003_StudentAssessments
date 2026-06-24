@@ -2,6 +2,10 @@
 
 Flask + MySQL student assessment system for the TCX2003 project demo.
 
+This repository is configured for a local laptop demonstration, not a
+PythonAnywhere or production deployment. The Flask debug command and local
+MySQL root connection in `flask_app.py` are intended for this local demo setup.
+
 ## Local Setup
 
 ```bash
@@ -81,6 +85,8 @@ The final validation query should return zero rows. If it returns rows, those ta
 ```bash
 flask --app flask_app run --debug
 ```
+
+Run the app locally on this laptop for the project demo.
 
 ## Session Audit Check
 
