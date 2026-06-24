@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS enrollment (
     course_id INT NOT NULL,  -- Reference courses table 
     PRIMARY KEY (student_id, course_id), -- Composite primary key to prevent duplicate enrollments
     enrollment_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
-    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE, -- should this be restrict 
-    FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE -- should this be restrict instead?
+    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS sessions (

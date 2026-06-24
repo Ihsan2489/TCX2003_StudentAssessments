@@ -1935,8 +1935,8 @@ Status:
 Implemented through /score/export.
 
 
-High-priority remaining work
-----------------------------
+Final demo verification
+-----------------------
 
 1. Keep leaderboard demo data easy to explain.
 
